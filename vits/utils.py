@@ -44,6 +44,22 @@ def load_checkpoint(checkpoint_path, model, optimizer=None):
   return model, optimizer, learning_rate, iteration
 
 
+def set_parameters(sid):
+    if sid == 0:
+        mean, var, dur = 0.0, 0.3, 1.2
+    elif sid == 1:
+        mean, var, dur = -0.3, 0.3, 1.0
+    elif sid == 2:
+        mean, var, dur = 0.3, 0.3, 1.2
+    elif sid == 3:
+        mean, var, dur = -0.3, 0.3, 1.2
+    elif sid == 51:
+        mean, var, dur = -0.4, 0.3, 1.2
+    else:
+        mean, var, dur = 0.0, 0.3, 1.0
+    return mean, var, dur
+
+
 def save_checkpoint(model, optimizer, learning_rate, iteration, checkpoint_path):
   logger.info("Saving model and optimizer state at iteration {} to {}".format(
     iteration, checkpoint_path))

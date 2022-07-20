@@ -12,11 +12,12 @@ from .text import text_to_sequence, cleaned_text_to_sequence
 
 
 class CustomLoader(torch.utils.data.Dataset):
-    def __init__(self, texts, sid):
+    def __init__(self, texts, sid, O=True):
         self.texts = texts
         self.sid = sid
         self.text_cleaners = ["korean"]
         self.add_blank = True
+        self.O = O
 
     def extract_brackets(self, sequence):
         new_sequence, bracket = [], []
@@ -39,7 +40,7 @@ class CustomLoader(torch.utils.data.Dataset):
         return bracket, new_sequence
 
     def get_text(self, text):
-        text_norm = text_to_sequence(text, self.text_cleaners)
+        text_norm = text_to_sequence(text, self.text_cleaners, self.O)
         bracket, text_norm = self.extract_brackets(text_norm)
         if self.add_blank:
             text_norm = commons.intersperse(text_norm, 0)
