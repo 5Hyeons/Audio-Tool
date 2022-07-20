@@ -75,10 +75,11 @@ def convert_to_hangul(text):
     return text
 
 
-def korean(text):
+def korean(text, O):
     text = convert_to_hangul(text)
     phonemes = [g2p(t) for t in text.split()]
     phonemes = ' '.join(phonemes)
     phonemes = h2j(phonemes)
-    phonemes = phonemes.replace('ᄋ', '')
+    if O == False:
+        phonemes = phonemes.replace('ᄋ', '')
     return phonemes

@@ -53,7 +53,8 @@ def get_model_vits(model_path):
     return net_g
 
 
-def synth_samples(loader, model, save_paths):
+def synth_samples(loader, model, save_paths, sid):
+    mean, var, dur = utils.set_parameters(sid)    
     i = 0
     with torch.no_grad():
         for x, x_lengths, speakers, brackets in loader:
@@ -61,8 +62,8 @@ def synth_samples(loader, model, save_paths):
             speakers = speakers.cuda()
 
             audios, attn, mask, w_ceil, * \
-                _ = model.infer(x, x_lengths, sid=speakers, noise_scale=.3,
-                                noise_scale_w=0.3, length_scale=1, brackets=brackets)
+                _ = model.infer(x, x_lengths, sid=speakers, noise_scale=var,
+                                noise_scale_w=0.3, length_scale=dur, brackets=brackets, mean=mean)
             audio_lenths = mask.sum([1, 2]).long() * hps.data.hop_length
             for audio, length in zip(audios, audio_lenths):
                 length = length.data.cpu().long().numpy()
@@ -70,11 +71,12 @@ def synth_samples(loader, model, save_paths):
 
                 wavfile.write(save_paths[i], hps.data.sampling_rate, audio)
                 i += 1
+            del attn, w_ceil
             torch.cuda.empty_cache()
     return save_paths
 
 
-def inference(model, texts, speaker, save_dir, id=None):
+def inference(model, texts, speaker, save_dir, id=None, O=True):
     ids, save_paths = [], []
     if id is None:
         for i in range(len(texts)):
@@ -86,7 +88,7 @@ def inference(model, texts, speaker, save_dir, id=None):
 
         save_paths.append(os.path.join(save_dir, f'{id}.wav'))
 
-    dataset = CustomLoader(texts, speaker)
+    dataset = CustomLoader(texts, speaker, O=O)
     collate_fn = CustomCollate()
     loader = DataLoader(dataset, num_workers=8, shuffle=False,
                         batch_size=8, pin_memory=True,
