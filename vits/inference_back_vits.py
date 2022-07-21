@@ -76,8 +76,10 @@ def synth_samples(loader, model, save_paths, sid):
     return save_paths
 
 
-def inference(model, texts, speaker, save_dir, id=None, O=True):
+def inference(model, texts, speaker, save_dir, id=None, O=False):
     ids, save_paths = [], []
+    if speaker in [1, 11]:
+        O=False
     if id is None:
         for i in range(len(texts)):
             new_id = uuid.uuid4().hex[:16]
@@ -94,6 +96,6 @@ def inference(model, texts, speaker, save_dir, id=None, O=True):
                         batch_size=8, pin_memory=True,
                         drop_last=False, collate_fn=collate_fn, prefetch_factor=2)
 
-    synth_samples(loader, model, save_paths)
+    synth_samples(loader, model, save_paths, speaker)
 
     return ids, texts
