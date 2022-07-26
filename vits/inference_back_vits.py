@@ -48,7 +48,7 @@ def get_model_vits(model_path):
         **hps.model).cuda()
     _ = net_g.eval()
 
-    _ = utils.load_checkpoint(model_path, net_g, None)
+    _ = utils.load_checkpoint(utils.latest_checkpoint_path(model_path, '*.pth'), net_g, None)
 
     return net_g
 
