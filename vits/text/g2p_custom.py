@@ -158,7 +158,7 @@ class G2pC(G2p):
         tokens = set(re.findall("([\d][\d,]*)([ㄱ-힣]+)/B", string))
         for token in tokens:
             num, bn = token
-            print(f'{num}, {bn}')
+            # print(f'{num}, {bn}')
             if bn in self.bound_nouns.split():
                 spelledout = self.process_num(num, sino=False)
             else:
