@@ -155,10 +155,9 @@ class G2pC(G2p):
         우리 세시/B 십분/B에 만나자.
         '''
         # Bound Nouns
-        tokens = set(re.findall("([\d][\d,]*)([ㄱ-힣]+)/B", string))
+        tokens = set(re.findall("([\d][\d,]*)( ?[ㄱ-힣]+)/B", string))
         for token in tokens:
             num, bn = token
-            # print(f'{num}, {bn}')
             if bn in self.bound_nouns.split():
                 spelledout = self.process_num(num, sino=False)
             else:
