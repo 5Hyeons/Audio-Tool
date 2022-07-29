@@ -52,9 +52,9 @@ def set_parameters(sid):
     elif sid == 2:
         mean, var, dur = 0.3, 0.3, 1.2
     elif sid == 3:
-        mean, var, dur = -0.3, 0.3, 1.2
+        mean, var, dur = -0.2, 0.3, 1.2
     elif sid == 51:
-        mean, var, dur = -0.3, 0.3, 1.2
+        mean, var, dur = -0.2, 0.3, 1.15
     else:
         mean, var, dur = 0.0, 0.3, 1.0
     return mean, var, dur
