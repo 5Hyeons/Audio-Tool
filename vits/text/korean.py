@@ -8,8 +8,8 @@ import codecs
 
 PAD = '_'
 EOS = '~'
-PUNC = '!\'(),-.:;?\"'
-SPACE = ' '
+PUNC = '!\'(),-.[]?*' # [ = 76, ] = 77, * = 79
+SPACE = ' ' # 80
 _SILENCES = ['sp', 'spn', 'sil']
 _MARKS = ['f', '{', '}', '+', 'x']
 
