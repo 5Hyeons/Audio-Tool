@@ -26,6 +26,14 @@ def intersperse(lst, item):
   result[1::2] = lst
   return result
 
+def intersperse_meta(meta):
+  for k, bracket in meta.items():
+    for i in range(len(bracket)):
+      if isinstance(bracket[i], list):
+        bracket[i][0] = bracket[i][0]*2
+      elif isinstance(bracket[i], int):
+        bracket[i] = bracket[i]*2 if k == 'fortis' else bracket[i]*2 + 1
+    meta[k] = bracket
 
 def kl_divergence(m_p, logs_p, m_q, logs_q):
   """KL(P||Q)"""
