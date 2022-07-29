@@ -19,48 +19,48 @@ class CustomLoader(torch.utils.data.Dataset):
         self.add_blank = True
         self.O = O
 
-    def extract_brackets(self, sequence):
-        new_sequence, bracket = [], []
+    def extract_metadata(self, sequence):
+        brackets = {85:'duration', 86:'duration', 76:'pitch', 77:'pitch'}
+        new_sequence, meta = [], {'duration':[], 'pitch':[], 'fortis':[]}
         cnt = 0
-        for i in range(len(sequence)):
+        i = 0
+        while i < len(sequence):
             s = sequence[i]
-            if s == 85:     # { ==> 85
-                oper = sequence[i+1]
-                step = 1
-                while sequence[i+step] == oper:
-                    step += 1
-                bracket.append([cnt, oper, step-1])     # 좌표, 부호, 스텝
-            elif s == 86:   # } ==> 86
-                bracket.append(cnt-1)
-            elif s in [87, 74]:     # 87 ==> +, 74 ==> -
-                continue
+            if s in [85, 76]:     # { ==> 85, [ ==> 76
+                # 중괄호 다음엔 반드시 부호가 따른다고 가정
+                _oper = sequence[i+1]
+                _step = 0
+                while sequence[i+1] == _oper: 
+                    _step += 1
+                    i += 1
+                meta[brackets[s]].append([cnt, _oper, _step])     # 좌표, 부호, 스텝. 스텝은 곧 부호의 수이다.
+            elif s in [86, 77]:   # } ==> 86, ] ==> 77
+                meta[brackets[s]].append(cnt-1)
+            elif s == 79:         # * ==> 79
+                meta['fortis'].append(cnt)
             else:
                 cnt += 1
                 new_sequence.append(s)
-        return bracket, new_sequence
+            i += 1
+        return meta, new_sequence
 
     def get_text(self, text):
-        text_norm = text_to_sequence(text, self.text_cleaners, self.O)
-        bracket, text_norm = self.extract_brackets(text_norm)
+        text_norm = text_to_sequence(text, self.text_cleaners)
+        meta, text_norm = self.extract_metadata(text_norm)
         if self.add_blank:
             text_norm = commons.intersperse(text_norm, 0)
-            for i in range(len(bracket)):
-                if isinstance(bracket[i], list):
-                    bracket[i][0] = bracket[i][0]*2
-                elif isinstance(bracket[i], int):
-                    bracket[i] = bracket[i]*2 + 1
-
+            commons.intersperse_meta(meta)
         text_norm = torch.LongTensor(text_norm)
-        return text_norm, bracket
+        return text_norm, meta
 
     def get_sid(self, sid):
         sid = torch.LongTensor([int(sid)])
         return sid
 
     def __getitem__(self, index):
-        stn_tst, bracket = self.get_text(self.texts[index])
+        stn_tst, meta = self.get_text(self.texts[index])
         sid = self.get_sid(self.sid)
-        return stn_tst, sid, bracket
+        return stn_tst, sid, meta
 
     def __len__(self):
         return len(self.texts)
@@ -71,13 +71,14 @@ class CustomCollate():
     """
 
     def __init__(self, return_ids=False):
+        self.bracket_w = 0.1
         self.return_ids = return_ids
 
     def __call__(self, batch):
         max_text_len = max([len(x[0]) for x in batch])
         text_lengths = torch.LongTensor(len(batch))
         sid = torch.LongTensor(len(batch))
-        brackets = []
+        metas = {'durations':[], 'pitches':[], 'forties':[]}
 
         text_padded = torch.LongTensor(len(batch), max_text_len)
         text_padded.zero_()
@@ -87,18 +88,27 @@ class CustomCollate():
             text_padded[i, :text.size(0)] = text
             text_lengths[i] = text.size(0)
             sid[i] = row[1]
-            bracket = []
-            for i in range(0, len(row[2]), 2):
-                s, oper, step = row[2][i]   # 좌표, 부호, 스텝
-                e = row[2][i+1]
-                if oper == 87:              # 87 ==> +
-                    w = 1+0.1*step
-                elif oper == 74:            # 21 ==> -
-                    w = 1-0.1*step
-                bracket.append((s, e, w))   # 시작점, 끝점, 가중치로 재정렬
-            brackets.append(bracket)
+            meta = row[2]
 
-        return text_padded, text_lengths, sid, brackets
+            metas['durations'].append(self.rearrangement(meta['duration'], self.bracket_w))
+            metas['pitches'].append(self.rearrangement(meta['pitch'], self.bracket_w))
+            metas['forties'].append(meta['fortis'])
+
+        return text_padded, text_lengths, sid, metas
+    
+    def rearrangement(self, bracket, bracket_w):
+        new_bracket = []
+        for i in range(0, len(bracket), 2):
+            s, oper, step = bracket[i]   # 좌표, 부호, 스텝
+            e = bracket[i+1]
+            if oper == 87:              # 87 ==> +
+                w = 1 + bracket_w * step     
+            elif oper == 74:            # 74 ==> -
+                w = max(0.1, 1 - bracket_w * step)
+            else:
+                w = 1
+            new_bracket.append((s, e, w))   # 시작점, 끝점, 가중치로 재정렬
+        return new_bracket
 
 
 class TextAudioLoader(torch.utils.data.Dataset):

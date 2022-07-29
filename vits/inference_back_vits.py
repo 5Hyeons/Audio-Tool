@@ -57,13 +57,13 @@ def synth_samples(loader, model, save_paths, sid):
     mean, var, dur = utils.set_parameters(sid)    
     i = 0
     with torch.no_grad():
-        for x, x_lengths, speakers, brackets in loader:
+        for x, x_lengths, speakers, metas in loader:
             x, x_lengths = x.cuda(), x_lengths.cuda()
             speakers = speakers.cuda()
 
             audios, attn, mask, w_ceil, * \
                 _ = model.infer(x, x_lengths, sid=speakers, noise_scale=var,
-                                noise_scale_w=0.3, length_scale=dur, brackets=brackets, mean=mean)
+                                noise_scale_w=0.3, length_scale=dur, metas=metas, mean=mean)
             audio_lenths = mask.sum([1, 2]).long() * hps.data.hop_length
             for audio, length in zip(audios, audio_lenths):
                 length = length.data.cpu().long().numpy()
