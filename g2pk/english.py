@@ -17,7 +17,7 @@ def convert_eng(string, cmu):
     >>> convert_eng("그 사람 좀 old school이야", cmu)
     그 사람 좀 올드 스쿨이야
     '''
-    eng_words = set(re.findall("[A-Za-z']+", string))
+    eng_words = set(re.findall("[A-Za-z]+", string))
     for eng_word in eng_words:
         word = eng_word.lower()
         if word not in cmu:
