@@ -17,7 +17,7 @@ def jyeo(inp, descriptive=False, verbose=False):
     # 일반적인 규칙으로 취급한다 by kyubyong
 
     out = re.sub("([ᄌᄍᄎ])ᅧ", r"\1ᅥ", inp)
-    gloss(verbose, out, inp, rule)
+    # gloss(verbose, out, inp, rule)
     return out
 
 
@@ -29,7 +29,7 @@ def ye(inp, descriptive=False, verbose=False):
         out = re.sub("([ᄀᄁᄃᄄㄹᄆᄇᄈᄌᄍᄎᄏᄐᄑᄒ])ᅨ", r"\1ᅦ", inp)
     else:
         out = inp
-    gloss(verbose, out, inp, rule)
+    # gloss(verbose, out, inp, rule)
     return out
 
 
@@ -37,7 +37,7 @@ def consonant_ui(inp, descriptive=False, verbose=False):
     rule = rule_id2text["5.3"]
 
     out = re.sub("([ᄀᄁᄂᄃᄄᄅᄆᄇᄈᄉᄊᄌᄍᄎᄏᄐᄑᄒ])ᅴ", r"\1ᅵ", inp)
-    gloss(verbose, out, inp, rule)
+    # gloss(verbose, out, inp, rule)
     return out
 
 
@@ -48,7 +48,7 @@ def josa_ui(inp, descriptive=False, verbose=False):
         out = re.sub("의/J", "에", inp)
     else:
         out = inp.replace("/J", "")
-    gloss(verbose, out, inp, rule)
+    # gloss(verbose, out, inp, rule)
     return out
 
 
@@ -59,7 +59,7 @@ def vowel_ui(inp, descriptive=False, verbose=False):
         out = re.sub("(\Sᄋ)ᅴ", r"\1ᅵ", inp)
     else:
         out = inp
-    gloss(verbose, out, inp, rule)
+    # gloss(verbose, out, inp, rule)
     return out
 
 
@@ -72,7 +72,7 @@ def jamo(inp, descriptive=False, verbose=False):
     out = re.sub("([으])[ᆿ]ᄋ", r"\1ᄀ", out)
     out = re.sub("([으])[ᇁ]ᄋ", r"\1ᄇ", out)
 
-    gloss(verbose, out, inp, rule)
+    # gloss(verbose, out, inp, rule)
     return out
 
 
@@ -83,7 +83,7 @@ def rieulgiyeok(inp, descriptive=False, verbose=False):
     out = inp
     out = re.sub("ᆰ/P([ᄀᄁ])", r"ᆯᄁ", out)
 
-    gloss(verbose, out, inp, rule)
+    # gloss(verbose, out, inp, rule)
     return out
 
 
@@ -96,7 +96,7 @@ def rieulbieub(inp, descriptive=False, verbose=False):
     out = re.sub("([ᆲᆴ])/Pᄉ", r"\1ᄊ", out)
     out = re.sub("([ᆲᆴ])/Pᄌ", r"\1ᄍ", out)
 
-    gloss(verbose, out, inp, rule)
+    # gloss(verbose, out, inp, rule)
     return out
 
 
@@ -122,7 +122,7 @@ def verb_nieun(inp, descriptive=False, verbose=False):
     for str1, str2 in pairs:
         out = re.sub(str1, str2, out)
 
-    gloss(verbose, out, inp, rule)
+    # gloss(verbose, out, inp, rule)
     return out
 
 
@@ -134,7 +134,7 @@ def balb(inp, descriptive=False, verbose=False):
     # exceptions
     out = re.sub(f"(바)ᆲ({syllable_final_or_consonants})", r"\1ᆸ\2", out)
     out = re.sub(f"(너)ᆲ([ᄌᄍ]ᅮ|[ᄃᄄ]ᅮ)", r"\1ᆸ\2", out)
-    gloss(verbose, out, inp, rule)
+    # gloss(verbose, out, inp, rule)
     return out
 
 
@@ -148,7 +148,7 @@ def palatalize(inp, descriptive=False, verbose=False):
 
     out = re.sub("ᆮᄒ([ᅵ])", r"ᄎ\1", out)
 
-    gloss(verbose, out, inp, rule)
+    # gloss(verbose, out, inp, rule)
     return out
 
 
@@ -173,5 +173,5 @@ def modifying_rieul(inp, descriptive=False, verbose=False):
     for str1, str2 in pairs:
         out = re.sub(str1, str2, out)
 
-    gloss(verbose, out, inp, rule)
+    # gloss(verbose, out, inp, rule)
     return out

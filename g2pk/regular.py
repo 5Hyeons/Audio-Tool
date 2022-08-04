@@ -28,7 +28,7 @@ def link1(inp, descriptive=False, verbose=False):
     for str1, str2 in pairs:
         out = out.replace(str1, str2)
 
-    gloss(verbose, out, inp, rule)
+    # gloss(verbose, out, inp, rule)
     return out
 
 
@@ -48,7 +48,7 @@ def link2(inp, descriptive=False, verbose=False):
     for str1, str2 in pairs:
         out = out.replace(str1, str2)
 
-    gloss(verbose, out, inp, rule)
+    # gloss(verbose, out, inp, rule)
     return out
 
 
@@ -84,7 +84,7 @@ def link3(inp, descriptive=False, verbose=False):
     for str1, str2 in pairs:
         out = out.replace(str1, str2)
 
-    gloss(verbose, out, inp, rule)
+    # gloss(verbose, out, inp, rule)
     return out
 
 
@@ -100,6 +100,6 @@ def link4(inp, descriptive=False, verbose=False):
     for str1, str2 in pairs:
         out = out.replace(str1, str2)
 
-    gloss(verbose, out, inp, rule)
+    # gloss(verbose, out, inp, rule)
     return out
 

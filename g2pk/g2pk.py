@@ -60,11 +60,11 @@ class G2p(object):
             if "===" in line:
                 str1, str2 = line.split("===")
                 out = re.sub(str1, str2, out)
-        gloss(verbose, out, string, rule)
+        # gloss(verbose, out, string, rule)
 
         return out
 
-    def __call__(self, string, descriptive=False, verbose=False, group_vowels=False, to_syl=True):
+    def __call__(self, string, descriptive=False, verbose=False, group_vowels=False, to_syl=False):
         '''Main function
         string: input string
         descriptive: boolean.
@@ -118,14 +118,14 @@ class G2p(object):
             _inp = inp
             inp = re.sub(str1, str2, inp)
 
-            if len(rule_ids)>0:
-                rule = "\n".join(self.rule2text.get(rule_id, "") for rule_id in rule_ids)
-            else:
-                rule = ""
-            gloss(verbose, inp, _inp, rule)
+            # if len(rule_ids)>0:
+            #     rule = "\n".join(self.rule2text.get(rule_id, "") for rule_id in rule_ids)
+            # else:
+            #     rule = ""
+            # gloss(verbose, inp, _inp, rule)
 
         # 8 link
-        for func in (link1, link2, link3, link4):
+        for func in (link1, link2, link4): # remove link3
             inp = func(inp, descriptive, verbose)
 
         # 9. postprocessing
