@@ -45,7 +45,7 @@ class CustomLoader(torch.utils.data.Dataset):
         return meta, new_sequence
 
     def get_text(self, text):
-        text_norm = text_to_sequence(text, self.text_cleaners)
+        text_norm = text_to_sequence(text, self.text_cleaners, self.O)
         meta, text_norm = self.extract_metadata(text_norm)
         if self.add_blank:
             text_norm = commons.intersperse(text_norm, 0)
