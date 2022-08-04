@@ -9,6 +9,42 @@ import re
 from g2pk.utils import adjust, compose, to_choseong, to_jungseong, to_jongseong, reconstruct
 
 
+eng2kor = {
+    'A': '에이',
+    'B': '비',
+    'C': '씨',
+    'D': '디',
+    'E': '이',
+    'F': '에프',
+    'G': '지',
+    'H': '에이치',
+    'I': '아이',
+    'J': '제이',
+    'K': '케이',
+    'L': '엘',
+    'M': '엠',
+    'N': '엔',
+    'O': '오',
+    'P': '피',
+    'Q': '큐',
+    'R': '알',
+    'S': '에스',
+    'T': '티',
+    'U': '유',
+    'V': '브이',
+    'W': '더블유',
+    'X': '엑스',
+    'Y': '와이',
+    'Z': '지',
+}
+
+
+def word_to_hangul(word):
+    ret = ''
+    for alpha in word:
+        ret += eng2kor[alpha]
+    return ret
+
 def convert_eng(string, cmu):
     '''Convert a string such that English words inside are turned into Hangul.
     string: input string.
@@ -21,6 +57,8 @@ def convert_eng(string, cmu):
     for eng_word in eng_words:
         word = eng_word.lower()
         if word not in cmu:
+            ret = word_to_hangul(word.upper())
+            string = string.replace(word, ret)
             continue
 
         arpabets = cmu[word][0] # https://en.wikipedia.org/wiki/ARPABET
