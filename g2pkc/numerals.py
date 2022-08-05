@@ -110,7 +110,6 @@ def convert_num(string):
     tokens = set(re.findall("([\d][\d,]*)( ?[ㄱ-힣]+)?(?:/B)?", string))
     for token in tokens:
         num, bn = token
-        print(num, bn, 1)
         if bn in BOUND_NOUNS.split():
             spelledout = process_num(num, sino=False)
         else:
@@ -118,10 +117,10 @@ def convert_num(string):
         string = string.replace(f"{num}{bn}", f"{spelledout}{bn}")
 
     # digit by digit for remaining digits
-    # digits = "0123456789"
-    # names = "영일이삼사오육칠팔구"
-    # for d, n in zip(digits, names):
-    #     string = string.replace(d, n)
+    digits = "0123456789"
+    names = "영일이삼사오육칠팔구"
+    for d, n in zip(digits, names):
+        string = string.replace(d, n)
 
     return string
 
