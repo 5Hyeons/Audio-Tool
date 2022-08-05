@@ -6,7 +6,7 @@ https://github.com/kyubyong/g2pK
 
 import re
 
-from g2pk.utils import adjust, compose, to_choseong, to_jungseong, to_jongseong, reconstruct
+from g2pkc.utils import adjust, compose, to_choseong, to_jungseong, to_jongseong, reconstruct
 
 
 eng2kor = {
