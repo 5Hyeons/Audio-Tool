@@ -53,8 +53,11 @@ def get_model_vits(model_path):
     return net_g
 
 
-def synth_samples(loader, model, save_paths, sid):
+def synth_samples(loader, model, save_paths, meta):
+    sid = meta['narration']
     mean, var, dur = utils.set_parameters(sid)    
+    mean, dur = mean + float(meta['pitch']), dur - float(meta['speed'])
+
     i = 0
     with torch.no_grad():
         for x, x_lengths, speakers, metas in loader:
@@ -76,8 +79,10 @@ def synth_samples(loader, model, save_paths, sid):
     return save_paths
 
 
-def inference(model, texts, speaker, save_dir, id=None, O=False):
+def inference(model, texts, meta, save_dir, id=None, O=False):
     ids, save_paths = [], []
+    speaker = int(meta['narration'])
+
     if speaker in [1, 11]:
         O=False
     if id is None:
@@ -96,6 +101,6 @@ def inference(model, texts, speaker, save_dir, id=None, O=False):
                         batch_size=8, pin_memory=True,
                         drop_last=False, collate_fn=collate_fn, prefetch_factor=2)
 
-    synth_samples(loader, model, save_paths, speaker)
+    synth_samples(loader, model, save_paths, meta)
 
     return ids, texts
