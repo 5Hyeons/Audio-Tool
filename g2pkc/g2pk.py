@@ -64,7 +64,7 @@ class G2p(object):
 
         return out
 
-    def __call__(self, string, descriptive=False, verbose=False, group_vowels=False, to_syl=False):
+    def __call__(self, string, descriptive=False, verbose=False, group_vowels=False, to_syl=False, use_dict=True):
         '''Main function
         string: input string
         descriptive: boolean.
@@ -98,7 +98,8 @@ class G2p(object):
         string = convert_eng(string, self.cmu)
 
         # 3. annotate
-        string = annotate(string, self.mecab)
+        if use_dict:
+            string = annotate(string, self.mecab)
 
         # 4. Spell out arabic numbers
         string = convert_num(string)
