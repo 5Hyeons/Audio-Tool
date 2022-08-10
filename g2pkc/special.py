@@ -156,11 +156,12 @@ def modifying_rieul(inp, descriptive=False, verbose=False):
     rule = rule_id2text["27"]
     out = inp
     
-    pairs = [   ("ᆯ/E ᄀ", r"ᆯ ᄁ"),
-                ("ᆯ/E ᄃ", r"ᆯ ᄄ"),
-                ("ᆯ/E ᄇ", r"ᆯ ᄈ"),
-                ("ᆯ/E ᄉ", r"ᆯ ᄊ"),
-                ("ᆯ/E ᄌ", r"ᆯ ᄍ"),
+    pairs = [   
+                # ("ᆯ/E ᄀ", r"ᆯ ᄁ"),
+                # ("ᆯ/E ᄃ", r"ᆯ ᄄ"),
+                # ("ᆯ/E ᄇ", r"ᆯ ᄈ"),
+                # ("ᆯ/E ᄉ", r"ᆯ ᄊ"),
+                # ("ᆯ/E ᄌ", r"ᆯ ᄍ"),
 
                 ("ᆯ걸", "ᆯ껄"),
                 ("ᆯ밖에", "ᆯ빠께"),

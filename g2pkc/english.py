@@ -55,12 +55,12 @@ def convert_eng(string, cmu):
     '''
     eng_words = set(re.findall("[A-Za-z]+", string))
     for eng_word in eng_words:
-        word = eng_word.lower()
-        if word not in cmu:
-            ret = word_to_hangul(word.upper())
-            string = string.replace(word, ret)
+        if eng_word.isupper() or (eng_word.lower() not in cmu):
+            ret = word_to_hangul(eng_word.upper())
+            string = string.replace(eng_word, ret)
             continue
 
+        word = eng_word.lower()
         arpabets = cmu[word][0] # https://en.wikipedia.org/wiki/ARPABET
         phonemes = adjust(arpabets)
         ret = ""
