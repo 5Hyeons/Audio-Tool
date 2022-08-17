@@ -67,10 +67,10 @@ def jamo(inp, descriptive=False, verbose=False):
     rule = rule_id2text["16"]
     out = inp
 
-    out = re.sub("([그])ᆮᄋ", r"\1ᄉ", out)
-    out = re.sub("([으])[ᆽᆾᇀᇂ]ᄋ", r"\1ᄉ", out)
-    out = re.sub("([으])[ᆿ]ᄋ", r"\1ᄀ", out)
-    out = re.sub("([으])[ᇁ]ᄋ", r"\1ᄇ", out)
+    out = re.sub("(디그)ᆮᄋ", r"\1ᄉ", out)
+    out = re.sub("([ᄌᄎᄐᄒ]ᅵ으)[ᆽᆾᇀᇂ]ᄋ", r"\1ᄉ", out)
+    out = re.sub("(키으)ᆿᄋ", r"\1ᄀ", out)
+    out = re.sub("(피으)ᇁᄋ", r"\1ᄇ", out)
 
     # gloss(verbose, out, inp, rule)
     return out
