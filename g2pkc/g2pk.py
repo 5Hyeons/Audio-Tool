@@ -56,7 +56,7 @@ class G2p(object):
         out = string
 
         for line in open(self.idioms_path, 'r', encoding="utf8"):
-            line = line.split("#")[0].strip()
+            line = line.split("#")[0].rstrip('\n')
             if "===" in line:
                 str1, str2 = line.split("===")
                 out = re.sub(str1, str2, out)
