@@ -1,21 +1,24 @@
 import os
 import sys
+import multiprocessing as mp
+from multiprocessing import Process, Queue
 from pydub import AudioSegment
 from pydub.silence import split_on_silence
 
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QThread, pyqtSignal, pyqtSlot
 
 class secondwindow(QDialog, QWidget):
     def __init__(self):
         super().__init__()
         self.initUI()
+        self.initThread()
         self.show()
         self.text = ''
 
     def initUI(self):
         self.setWindowTitle('Audio Split Tool')
-        self.resize(340, 140)
+        self.resize(340, 150)
         self.initDialog()
         self.initLine()
         self.initLable()
@@ -67,10 +70,9 @@ class secondwindow(QDialog, QWidget):
         self.glabel.move(10, 30)
         self.glabel.resize(300, 60)
         
-
     def initBtn(self):
         self.btn1 = QPushButton('Select audio file', self)
-        self.btn1.move(110, 110)
+        self.btn1.move(110, 120)
         self.btn1.clicked.connect(self.select_audio)
 
         self.btn2 = QPushButton('?', self)
@@ -92,11 +94,25 @@ class secondwindow(QDialog, QWidget):
         self.gbtn.move(130, 110)
         self.gbtn.clicked.connect(lambda: self.gDialog.close())
 
+        self.pbar = QProgressBar(self.pDialog)
+        self.pbar.move(10, 20)
+        self.pbar.resize(300, 20)
+        self.pbar.setMinimum(0)
+        self.pbar.setMaximum(0)
+
+        self.pbtn = QPushButton('OK', self.gDialog)
+        self.pbtn.move(130, 110)
+        self.pbtn.clicked.connect(lambda: self.gDialog.close())
+
+    def initThread(self):
+        self.consumer = SplitAudio()
+        self.consumer.poped.connect(self.generate_audio)
+
     def initDialog(self):
         # progressbar Dialog
         self.pDialog = QDialog()
         self.pDialog.setWindowTitle('wait for a few minutes ...')
-        self.pDialog.setWindowModality(Qt.NonModal)
+        # self.pDialog.setWindowModality(Qt.NonModal)
         self.pDialog.resize(320, 60)
         # guide Dialog
         self.gDialog = QDialog()
@@ -120,42 +136,42 @@ class secondwindow(QDialog, QWidget):
         elif os.name == 'nt':
             self.src = self.src.replace('/', '\\')
 
-        self.split_audio()
-        self.change_dialog()
-
-    def split_audio(self):
-        pbar = QProgressBar(self.pDialog)
-        pbar.move(10, 20)
-        pbar.resize(300, 20)
-        pbar.setMinimum(0)
-        pbar.setMaximum(0)
-
         self.pDialog.show()
-        
-        self.dst = os.path.join(os.path.dirname(self.src), 'split')
-        os.makedirs(self.dst, exist_ok=True)
+        self.consumer.setParameters(self.src, self.min_sil_len, self.silence_thresh)
+        self.consumer.start()
+    
+    @pyqtSlot(list)
+    def generate_audio(self, audio_chunks):
+        dst = os.path.join(os.path.dirname(self.src), 'split')
+        os.makedirs(dst, exist_ok=True)
 
-        sound_file = AudioSegment.from_wav(self.src)
-        audio_chunks = split_on_silence(sound_file, min_silence_len=self.min_sil_len, silence_thresh=self.silence_thresh)  # 조정 필
-        
         for i, chunk in enumerate(audio_chunks):
-           out_file = os.path.join(self.dst, f"{self.name}_{i+1:04}.wav")
+           out_file = os.path.join(dst, f"{self.name}_{i+1:04}.wav")
            chunk.export(out_file, format="wav")
         print(1+i, os.path.basename(self.src))
-        del audio_chunks, sound_file
+        del audio_chunks
 
         self.pDialog.close()
+        self.change_dialog(dst)
 
-    def change_dialog(self):
+    def change_dialog(self, dst):
         self.setWindowTitle('Audio Split is complete')
 
         self.label1.setText('It was split into ')
-        self.label2.setText('{} files in '.format(len(os.listdir(self.dst))))
-        self.label3.setText(self.dst)
+        self.label2.setText('{} files in '.format(len(os.listdir(dst))))
+        self.label3.hide()
+        te = QTextEdit(dst, self)
+        te.isReadOnly()
+        te.move(10, 70)
+        te.resize(300, 40)
+        te.show()
 
         self.line1.hide()
         self.line2.hide()
         self.line3.hide()
+        self.btn2.hide()
+        self.btn3.hide()
+        self.btn4.hide()
 
         self.btn1.setText('done')
         self.btn1.disconnect()
@@ -170,3 +186,19 @@ class secondwindow(QDialog, QWidget):
             self.glabel.setText('Parameter: 침묵 구간의 기준.\n낮을 수록 관용적이고 높을수록 깐깐합니다.\n(default: 45, 단위 dB)')
         
         self.gDialog.show()
+
+class SplitAudio(QThread):
+    poped = pyqtSignal(list)
+    def __init__(self):
+        super().__init__()
+    
+    def setParameters(self, src, min_sil_len, silence_thresh):
+        self.src = src
+        self.min_sil_len = min_sil_len
+        self.silence_thresh = silence_thresh
+
+    def run(self):
+        sound_file = AudioSegment.from_wav(self.src)
+        audio_chunks = split_on_silence(sound_file, min_silence_len=self.min_sil_len, silence_thresh=self.silence_thresh)  # 조정 필
+        del sound_file
+        self.poped.emit(audio_chunks)

@@ -7,6 +7,7 @@ import shutil
 from glob import glob
  
 from secondwindow import secondwindow
+from g2pK.g2pkc.g2pk import G2p
 
 QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
  
@@ -33,9 +34,11 @@ class CWidget(QWidget):
         gb = QGroupBox('Play List')
         vbox.addWidget(gb)
          
-        self.table = QTableWidget(0, 2, self)             
+        self.table = QTableWidget(0, 1, self)   
+        header = self.table.horizontalHeader()          
+        header.setSectionResizeMode(0, QHeaderView.Stretch)
         self.table.setHorizontalHeaderItem(0, QTableWidgetItem('Title'))
-        self.table.setHorizontalHeaderItem(1, QTableWidgetItem('Progress')) 
+        # self.table.setHorizontalHeaderItem(1, QTableWidgetItem('Progress')) 
         # read only
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         # multi row selection
@@ -173,10 +176,10 @@ class CWidget(QWidget):
         cnt = len(files)       
         self.table.setRowCount(cnt)
         for i in range(cnt):
-            self.table.setItem(i,0, QTableWidgetItem(files[i]))
-            pbar = QProgressBar(self.table)
-            pbar.setAlignment(Qt.AlignCenter)            
-            self.table.setCellWidget(i,1, pbar)
+            self.table.setItem(i, 0, QTableWidgetItem(files[i]))
+            # pbar = QProgressBar(self.table)
+            # pbar.setAlignment(Qt.AlignCenter)            
+            # self.table.setCellWidget(i,1, pbar)
              
         self.createPlaylist(files)       
  
@@ -208,7 +211,7 @@ class CWidget(QWidget):
         self.second = secondwindow()
         self.second.exec()
         self.show()
-    # g2p module
+    # Apply g2p module
     def apply_g2p(self):
         textFile = QFileDialog.getOpenFileName(self,
                                         'Select text file',
@@ -217,8 +220,12 @@ class CWidget(QWidget):
                                         )[0]
         if textFile == '':
             return
-        print(textFile)
-
+        dir, bn = os.path.split(textFile)
+        name, ext = os.path.splitext(bn)
+        new_textFile = os.path.join(dir, name + '_cleand' + ext)
+        g2p = G2p()
+        with open(new_textFile, 'w') as f:
+            f.write(g2p(open(textFile, 'r').read(), descriptive=True, to_syl=True, use_dict=True))
     # 파일 삭제
     def delete(self):
         '''
@@ -226,7 +233,11 @@ class CWidget(QWidget):
         삭제 키로 파일 삭제 시 파일을 제거(remove)하는 것이 아닌 Deleted 폴더로 옮기는 방식을 사용했습니다.
         따라서 필요 시 복원이 가능하며, 제거한 역순으로의 복원을 위해 Deleted 폴더로 옮길 때 원본에 숫자 태그를 붙여 옮깁니다.        
         '''
-        _index = min(self.selectedList) if len(self.selectedList) > 1 or self.selectedList[0] == 0 else self.selectedList[0]-1
+        if len(self.selectedList) > 1 or self.selectedList[0] == 0:
+            _index = min(self.selectedList) 
+        else: 
+            _index = self.selectedList[0]-1
+
         for _item in self.selectedList:
             selectedFile = self.playlist[_item]
             fileName = os.path.basename(selectedFile)
