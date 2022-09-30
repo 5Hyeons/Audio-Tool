@@ -7,6 +7,7 @@ import shutil
 from glob import glob
  
 from secondwindow import secondwindow
+from thirdwindow import Measurement
 from g2pK.g2pkc.g2pk import G2p
 
 QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
@@ -115,8 +116,12 @@ class CWidget(QWidget):
         btnTextG2p = QPushButton('G2p Module')
         btnTextG2p.setStyleSheet('color:black; font: bold;')
         btnTextG2p.clicked.connect(self.apply_g2p)
+        btnTime = QPushButton('Time measurement')
+        btnTime.setStyleSheet('color:black; font:bold;')
+        btnTime.clicked.connect(self.time_measurement)
         box.addWidget(btnAudioSplit)
         box.addWidget(btnTextG2p)
+        box.addWidget(btnTime)
 
         gb.setLayout(box)
 
@@ -226,6 +231,14 @@ class CWidget(QWidget):
         g2p = G2p()
         with open(new_textFile, 'w') as f:
             f.write(g2p(open(textFile, 'r').read(), descriptive=True, to_syl=True, use_dict=True))
+    # 시간 측정
+    def time_measurement(self):
+        if self.audioDir is None or self.audioDir == '':
+            return
+        wavs = glob(os.path.join(self.audioDir, '*.wav'))
+        third = Measurement(self, wavs)
+        third.exec()
+
     # 파일 삭제
     def delete(self):
         '''
@@ -304,16 +317,6 @@ class CWidget(QWidget):
     def updateMediaChanged(self, index):
         if index>=0:
             self.table.selectRow(index)            
- 
-    def updateDurationChanged(self, index, msec):        
-        self.pbar = self.table.cellWidget(index, 1)
-        if self.pbar:
-            self.pbar.setRange(0, msec)       
- 
-    def updatePositionChanged(self, index, msec):
-        self.pbar = self.table.cellWidget(index, 1)
-        if self.pbar:
-            self.pbar.setValue(msec)
  
  
 if __name__ == '__main__':
