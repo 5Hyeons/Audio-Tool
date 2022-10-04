@@ -165,9 +165,10 @@ def annotate(string, mecab):
     mecab: mecab object
     '''
     tokens = mecab.pos(string)
-    if string.replace(" ", "") != "".join(token for token, _ in tokens):
+    
+    if re.sub(r'[ \n]', '', string) != "".join(token for token, _ in tokens):
         return string
-    blanks = [i for i, char in enumerate(string) if char == " "]
+    blanks = [(i, char) for i, char in enumerate(string) if char in (" ", "\n")]
 
     tag_seq = []
     for token, tag in tokens:
@@ -179,8 +180,8 @@ def annotate(string, mecab):
         tag_seq.append("_" * (len(token) - 1) + tag)
     tag_seq = "".join(tag_seq)
 
-    for i in blanks:
-        tag_seq = tag_seq[:i] + " " + tag_seq[i:]
+    for i, char in blanks:
+        tag_seq = tag_seq[:i] + char + tag_seq[i:]
 
     annotated = ""
     for char, tag in zip(string, tag_seq):
