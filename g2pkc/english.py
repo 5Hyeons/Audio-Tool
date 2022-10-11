@@ -55,9 +55,11 @@ def convert_eng(string, cmu):
     '''
     eng_words = set(re.findall("[A-Za-z]+", string))
     for eng_word in eng_words:
+        print('eng_word :', eng_word)
         if eng_word.isupper() or (eng_word.lower() not in cmu):
             ret = word_to_hangul(eng_word.upper())
             string = string.replace(eng_word, ret)
+            print(eng_word, ret)
             continue
 
         word = eng_word.lower()
