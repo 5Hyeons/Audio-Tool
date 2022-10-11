@@ -46,20 +46,20 @@ def word_to_hangul(word):
     return ret
 
 def convert_eng(string, cmu):
-    '''
-    Convert a string such that English words inside are turned into Hangul.
+    '''Convert a string such that English words inside are turned into Hangul.
     string: input string.
     cmu: cmu dict object.
 
     >>> convert_eng("그 사람 좀 old school이야", cmu)
     그 사람 좀 올드 스쿨이야
     '''
-    rets = []
-    eng_words = re.findall("[A-Za-z]+", string)
-    for eng_word in eng_words:
+    eng_words = list(set(re.findall("[A-Za-z]+", string)))
+    for eng_word in sorted(eng_words, key=len, reverse=True):
+        print('eng_word :', eng_word)
         if eng_word.isupper() or (eng_word.lower() not in cmu):
             ret = word_to_hangul(eng_word.upper())
-            rets.append(ret)
+            string = string.replace(eng_word, ret)
+            print(eng_word, ret)
             continue
 
         word = eng_word.lower()
@@ -182,8 +182,8 @@ def convert_eng(string, cmu):
         ret = reconstruct(ret)
         ret = compose(ret)
         ret = re.sub("[\u1100-\u11FF]", "", ret) # remove hangul jamo
-        rets.append(ret)
-    return ' '.join(rets)
+        string = string.replace(eng_word, ret)
+    return string
 
 if __name__ == "__main__":
     from nltk.corpus import cmudict
