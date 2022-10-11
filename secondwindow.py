@@ -53,7 +53,7 @@ class secondwindow(QDialog, QWidget):
 
         self.label2 = QLabel(self)
         self.label2.move(10, 50)
-        self.label2.resize(300, 20)
+        self.label2.resize(300, 20) 
         self.label2.setText('choose minimum silence length')
         self.label2.setAlignment(Qt.AlignLeft)
         self.label2.setStyleSheet('color:black; font: bold;')
@@ -142,7 +142,7 @@ class secondwindow(QDialog, QWidget):
     
     @pyqtSlot(list)
     def generate_audio(self, audio_chunks):
-        dst = os.path.join(os.path.dirname(self.src), 'split')
+        dst = os.path.join(os.path.dirname(self.src), self.name)
         os.makedirs(dst, exist_ok=True)
 
         for i, chunk in enumerate(audio_chunks):
