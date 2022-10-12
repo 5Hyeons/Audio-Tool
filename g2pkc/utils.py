@@ -249,7 +249,7 @@ def _get_examples():
 ############## Utilities ##############
 def get_rule_id2text():
     '''for verbose=True'''
-    rules = open(os.path.dirname(os.path.abspath(__file__)) + '/rules.txt', 'r', encoding='utf8').read().strip().split("\n\n")
+    rules = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'rules.txt'), 'r', encoding='utf8').read().strip().split("\n\n")
     rule_id2text = dict()
     for rule in rules:
         rule_id, texts = rule.splitlines()[0], rule.splitlines()[1:]
