@@ -1,5 +1,9 @@
-/for_distribution
+dist/
+build/
+
 *.pyc
 *.txt
 *.wav
 *.spec
+
+main.spec
