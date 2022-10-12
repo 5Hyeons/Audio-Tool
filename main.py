@@ -311,8 +311,8 @@ class CWidget(QWidget):
         name, ext = os.path.splitext(bn)
         new_textFile = os.path.join(dir, name + '_cleand' + ext)
         g2p = G2p()
-        with open(new_textFile, 'w') as f:
-            f.write(g2p(open(textFile, 'r').read(), descriptive=True, to_syl=True, use_dict=True))
+        with open(new_textFile, 'w', encoding='utf-8') as f:
+            f.write(g2p(open(textFile, 'r', encoding='utf-8').read(), descriptive=True, to_syl=True, use_dict=True))
 
     # phoneme to jamo
     def make_filelist(self):
@@ -325,9 +325,9 @@ class CWidget(QWidget):
         wavs = sorted(glob(os.path.join(self.audioDir, '*.wav')))
         lines = open(self.textFile[0], 'r', encoding='UTF-8').readlines()
         random.seed(1997)
-        valid_idxs = random.sample(range(len(lines)), 10)
+        valid_idxs = random.sample(range(len(lines)), min(10, len(lines)//10))
 
-        with open(dst_train, 'w') as t, open(dst_valid, 'w') as v:
+        with open(dst_train, 'w', encoding='utf-8') as t, open(dst_valid, 'w', encoding='utf-8') as v:
             for i in range(len(lines)):
                 filename = os.path.basename(wavs[i])
                 line = lines[i]
