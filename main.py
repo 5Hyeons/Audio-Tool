@@ -185,6 +185,8 @@ class CWidget(QWidget):
             # 왼쪽 방향키 입력 시 재생
             elif event.key() == Qt.Key_Left:
                 self.player.play(self.playlist, self.selectedList[0], self.playOption)
+            elif event.key() in [Qt.Key_R, Qt.Key_F5]:
+                self.refresh()
 
     def tableChanged(self):
         self.selectedList.clear()        
