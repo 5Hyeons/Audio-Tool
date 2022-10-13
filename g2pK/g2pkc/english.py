@@ -53,11 +53,13 @@ def convert_eng(string, cmu):
     >>> convert_eng("그 사람 좀 old school이야", cmu)
     그 사람 좀 올드 스쿨이야
     '''
-    eng_words = set(re.findall("[A-Za-z]+", string))
-    for eng_word in eng_words:
+    eng_words = list(set(re.findall("[A-Za-z]+", string)))
+    for eng_word in sorted(eng_words, key=len, reverse=True):
+        print('eng_word :', eng_word)
         if eng_word.isupper() or (eng_word.lower() not in cmu):
             ret = word_to_hangul(eng_word.upper())
             string = string.replace(eng_word, ret)
+            print(eng_word, ret)
             continue
 
         word = eng_word.lower()
