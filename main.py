@@ -11,7 +11,7 @@ from jamo import h2j
 from glob import glob
 
 from g2pK.g2pkc.g2pk import G2p
-from windows import AudioSplitWindow, TimeMeasurementWindow
+from windows import AudioSplitWindow, AudioSplitOneWindow, TimeMeasurementWindow
 
 QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
  
@@ -63,6 +63,10 @@ class CWidget(QWidget):
         hbox.addWidget(btnAddText)   
         box.addLayout(hbox)
          
+        btnSplit = QPushButton('Split')
+        btnSplit.clicked.connect(self.audio_split_one)
+        box.addWidget(btnSplit)
+
         btnRefesh = QPushButton('Refresh')
         btnRefesh.clicked.connect(self.refresh)
         box.addWidget(btnRefesh)
@@ -242,12 +246,23 @@ class CWidget(QWidget):
     def refresh(self):
         self.addAudioList(refresh=True)
         self.addTextList(refresh=True)
+
     # 오디오 자르는 함수
     def audio_split(self):
         self.hide()
         self.second = AudioSplitWindow()
         self.second.exec()
         self.show()
+    def audio_split_one(self):
+        if self.audioDir is None or len(self.selectedList) != 1:
+            print('Select one')
+            return
+        selectedFile = self.playlist[self.selectedList[0]]
+        print(selectedFile)
+        dialog = AudioSplitOneWindow(self, selectedFile)
+        dialog.show()
+        
+
     def audio_transform(self):
         pass
     # 시간 측정

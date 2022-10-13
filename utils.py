@@ -1,4 +1,6 @@
 import itertools
+from pydub import AudioSegment
+from pydub.silence import split_on_silence
 
 def pairwise(iterable):
     "s -> (s0,s1), (s1,s2), (s2, s3), ..."
@@ -16,3 +18,5 @@ def db_to_float(db, using_amplitude=True):
         return 10 ** (db / 20)
     else:  # using power
         return 10 ** (db / 10)
+
+    
