@@ -11,8 +11,7 @@ from jamo import h2j
 from glob import glob
 
 from g2pK.g2pkc.g2pk import G2p
-from secondwindow import secondwindow
-from thirdwindow import Measurement
+from windows import AudioSplitWindow, TimeMeasurementWindow
 
 QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
  
@@ -246,7 +245,7 @@ class CWidget(QWidget):
     # 오디오 자르는 함수
     def audio_split(self):
         self.hide()
-        self.second = secondwindow()
+        self.second = AudioSplitWindow()
         self.second.exec()
         self.show()
     def audio_transform(self):
@@ -256,7 +255,7 @@ class CWidget(QWidget):
         if self.audioDir is None or self.audioDir == '':
             return
         wavs = glob(os.path.join(self.audioDir, '*.wav'))
-        third = Measurement(self, wavs)
+        third = TimeMeasurementWindow(self, wavs)
         third.exec()
 
     # 파일 정렬
