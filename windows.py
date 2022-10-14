@@ -62,6 +62,18 @@ class AudioSplitWindow(QDialog, QWidget):
         hbox.addWidget(self.line3)
         hbox.addWidget(btn)
         vbox.addLayout(hbox)
+        # Line 4
+        hbox = QHBoxLayout()
+        self.label4 = QLabel('Set the offest')
+        self.line4 = QLineEdit('1')
+        self.line4.setMaximumWidth(50)
+        btn = QPushButton('?')
+        btn.setMaximumWidth(20)
+        btn.clicked.connect(lambda: self.show_guide(5))
+        hbox.addWidget(self.label4)
+        hbox.addWidget(self.line4)
+        hbox.addWidget(btn)
+        vbox.addLayout(hbox)
         # Select button
         btn = QPushButton('Select audio file')
         btn.clicked.connect(self.select_audio)
@@ -88,11 +100,11 @@ class AudioSplitWindow(QDialog, QWidget):
         self.pDialog.setLayout(vbox)
 
     def select_audio(self):
-        self.hide()
 
         self.name = self.line1.text()
         self.min_sil_len = int(self.line2.text())
         self.silence_thresh = -int(self.line3.text())
+        self.offset = int(self.line4.text())
         print(self.name, self.silence_thresh, self.min_sil_len)
 
         self.src = QFileDialog.getOpenFileName(self,
@@ -103,8 +115,9 @@ class AudioSplitWindow(QDialog, QWidget):
 
         if self.src is None or self.src == '':
             return
-        elif os.name == 'nt':
+        if os.name == 'nt':
             self.src = self.src.replace('/', '\\')
+        self.hide()
 
         self.pDialog.show()
         self.consumer.setParameters(self.src, self.min_sil_len, self.silence_thresh)
@@ -116,7 +129,7 @@ class AudioSplitWindow(QDialog, QWidget):
         os.makedirs(dst, exist_ok=True)
 
         for i, chunk in enumerate(audio_chunks):
-           out_file = os.path.join(dst, f"{self.name}_{i+1:04}.wav")
+           out_file = os.path.join(dst, f"{self.name}_{i + self.offset:04}.wav")
            chunk.export(out_file, format="wav")
         print(1+i, os.path.basename(self.src))
         del audio_chunks
@@ -160,7 +173,8 @@ class AudioSplitWindow(QDialog, QWidget):
             label.setText('Parameter: 소리 없는 구간의 최소 길이.\n(default: 1200, 단위 ms)')
         elif n == 4:
             label.setText('Parameter: 침묵 구간의 기준.\n낮을 수록 관용적이고 높을수록 깐깐합니다.\n(default: 45, 단위 dB)')
-        
+        elif n == 5:
+            label.setText('파일 생성 시 offset으로 설정한 번호 부터 차례대로 생성됩니다.')
         dialog.show()
 
     @pyqtSlot(int)
