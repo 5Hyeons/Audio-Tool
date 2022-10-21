@@ -8,7 +8,7 @@ import os
 import shutil
 import random
 from jamo import h2j
-from glob import glob
+import glob
 
 from g2pK.g2pkc.g2pk import G2p
 from windows import *
@@ -211,6 +211,8 @@ class CWidget(QWidget):
             self.audioDir = QFileDialog.getExistingDirectory(self, "Select directory containing audio files")
         if self.audioDir is None or self.audioDir == '':
             return
+        if os.name == 'nt':
+            self.audioDir = self.audioDir.replace('/', '\\')
         self.deleteDir = os.path.join(self.audioDir, 'Deleted')
         
         files = [os.path.join(self.audioDir, file) for file in sorted(os.listdir(self.audioDir)) if '.wav' in file]    
@@ -284,7 +286,7 @@ class CWidget(QWidget):
     def time_measurement(self):
         if self.audioDir is None or self.audioDir == '':
             return
-        wavs = glob(os.path.join(self.audioDir, '*.wav'))
+        wavs = glob.glob(os.path.join(self.audioDir, '*.wav'))
         third = TimeMeasurementWindow(self, wavs)
         third.exec()
 
@@ -319,7 +321,7 @@ class CWidget(QWidget):
         self.sort_dialog.show()
 
     def file_sort(self):
-        wavs = sorted(glob(os.path.join(self.audioDir, '*.wav')))
+        wavs = sorted(glob.glob(os.path.join(self.audioDir, '*.wav')))
         if os.path.exists(self.deleteDir):
             shutil.rmtree(self.deleteDir)
         name = self.sort_line.text()
@@ -356,7 +358,7 @@ class CWidget(QWidget):
         dst_train = os.path.join(os.path.dirname(self.audioDir), 'train_filelist.txt.cleaned')
         dst_valid = os.path.join(os.path.dirname(self.audioDir), 'valid_filelist.txt.cleaned')
         
-        wavs = sorted(glob(os.path.join(self.audioDir, '*.wav')))
+        wavs = sorted(glob.glob(os.path.join(self.audioDir, '*.wav')))
         lines = open(self.textFile[0], 'r', encoding='UTF-8').readlines()
         random.seed(1997)
         valid_idxs = random.sample(range(len(lines)), min(10, len(lines)//10))
@@ -406,7 +408,7 @@ class CWidget(QWidget):
         if not os.path.exists(self.deleteDir):
             return
         # 숫자 태그 기준으로 sort
-        deletedFiles = sorted(glob(os.path.join(self.deleteDir, '*.wav')), key=lambda x: int(os.path.basename(x).split('_')[0]))
+        deletedFiles = sorted(glob.glob(os.path.join(self.deleteDir, '*.wav')), key=lambda x: int(os.path.basename(x).split('_')[0]))
         if not deletedFiles:
             return
         filename = os.path.basename(deletedFiles[-1])
