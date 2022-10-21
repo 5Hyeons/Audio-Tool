@@ -11,7 +11,7 @@ from jamo import h2j
 from glob import glob
 
 from g2pK.g2pkc.g2pk import G2p
-from windows import AudioSplitWindow, AudioSplitOneWindow, TimeMeasurementWindow
+from windows import *
 
 QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
  
@@ -62,10 +62,15 @@ class CWidget(QWidget):
         hbox.addWidget(btnAddAudio)
         hbox.addWidget(btnAddText)   
         box.addLayout(hbox)
-         
+        
+        hbox = QHBoxLayout()
         btnSplit = QPushButton('Split')
+        btnConcat = QPushButton('Concat')
         btnSplit.clicked.connect(self.audio_split_one)
-        box.addWidget(btnSplit)
+        btnConcat.clicked.connect(self.audio_concat)
+        hbox.addWidget(btnSplit)
+        hbox.addWidget(btnConcat)
+        box.addLayout(hbox)
 
         btnRefesh = QPushButton('Refresh')
         btnRefesh.clicked.connect(self.refresh)
@@ -261,7 +266,17 @@ class CWidget(QWidget):
         print(selectedFile)
         dialog = AudioSplitOneWindow(self, selectedFile)
         dialog.show()
-        
+        self.player.stop()
+    # 오디오 붙이는 함수
+    def audio_concat(self):
+        if self.audioDir is None or len(self.selectedList) == 1:
+            print('Select multiple files')
+            return
+        files = sorted([self.playlist[i] for i in self.selectedList])
+        print(files)
+        dialog = AudioConcatWindow(self, files)
+        dialog.show()
+        self.player.stop()
 
     def audio_transform(self):
         pass
@@ -328,7 +343,10 @@ class CWidget(QWidget):
         new_textFile = os.path.join(dir, name + '_cleand' + ext)
         g2p = G2p()
         with open(new_textFile, 'w', encoding='utf-8') as f:
-            f.write(g2p(open(textFile, 'r', encoding='utf-8').read(), descriptive=True, to_syl=True, use_dict=True))
+            lines = open(textFile, 'r', encoding='utf-8').read()
+            lines_g2p = g2p(lines, descriptive=True, to_syl=True, use_dict=True)
+            lines_g2p = lines_g2p.replace('*', '')
+            f.write(lines_g2p)
 
     # phoneme to jamo
     def make_filelist(self):

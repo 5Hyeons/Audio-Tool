@@ -2,6 +2,8 @@ import os
 import glob
 import utils
 import shutil
+import numpy as np
+from scipy.io import wavfile
 from multiprocessing import Queue
 
 from PyQt5.QtWidgets import *
@@ -219,7 +221,7 @@ class AudioSplitOneWindow(QDialog):
         # Line 1
         hbox = QHBoxLayout()
         label = QLabel('Set a minimum length of silence.')
-        self.line1 = QLineEdit('100')
+        self.line1 = QLineEdit('1000')
         self.line1.setMaximumWidth(50)
         btn = QPushButton('?')
         btn.setMaximumWidth(20)
@@ -266,9 +268,7 @@ class AudioSplitOneWindow(QDialog):
         vbox.addWidget(btn)
         dialog.setLayout(vbox)
         
-        if n == 2:
-            label.setText('split 한 후 오디오 파일들의 이름을 정하세요.\n(default: split)')
-        elif n == 3:
+        if n == 3:
             label.setText('Parameter: 소리 없는 구간의 최소 길이.\n(default: 1200, 단위 ms)')
         elif n == 4:
             label.setText('Parameter: 침묵 구간의 기준.\n낮을 수록 관용적이고 높을수록 깐깐합니다.\n(default: 45, 단위 dB)')
@@ -276,14 +276,14 @@ class AudioSplitOneWindow(QDialog):
         dialog.show()
     # 오디오 쪼개기
     def split(self):
-        seg = utils.AudioSegment.from_wav(self.file)
-        min_silence_len = int(self.line1.text())
-        silence_thresh = -int(self.line2.text())
-        audio_chunks = utils.split_on_silence(seg, min_silence_len, silence_thresh)
         tmp_dir = os.path.join(os.getcwd(), 'temp')
         os.makedirs(tmp_dir, exist_ok=True)
         # 파일 전부 삭제
         [os.remove(path) for path in glob.glob(os.path.join(tmp_dir, '*'))]
+        seg = utils.AudioSegment.from_wav(self.file)
+        min_silence_len = int(self.line1.text())
+        silence_thresh = -int(self.line2.text())
+        audio_chunks = utils.split_on_silence(seg, min_silence_len, silence_thresh)
         out_files = []
         for i, chunk in enumerate(audio_chunks):
             out_file = os.path.join(tmp_dir, f'{self.file_bn[:-4]}_{i+1:02}.wav')
@@ -329,11 +329,128 @@ class AudioSplitOneWindow(QDialog):
             
         if self.table.rowCount()!=0 and len(self.selectedList) == 0:
             self.selectedList.append(0)
- 
     
     def tableDbClicked(self, e):
         self.player.play(self.playlist, self.selectedList[0], 0)
   
+class AudioConcatWindow(QDialog):
+    '''
+    선택한 오디오 여러개를 하나로 합치는 클래스입니다.
+    '''
+    def __init__(self, w, files):
+        super().__init__(w)
+        self.initUI()
+        self.w = w
+        self.files = files
+        self.player = CPlayer(self)
+        self.playlist = []
+        self.selectedList = []
+    
+
+    def initUI(self):
+        self.setWindowTitle('Concatenate multiple file')
+        vbox = QVBoxLayout()
+        gb = QGroupBox('concatenated list')
+        box = QVBoxLayout()
+        # Play list
+        self.table = QTableWidget(0, 1, self)
+        header = self.table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.Stretch)
+        self.table.setHorizontalHeaderItem(0, QTableWidgetItem('Title'))
+        self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.table.itemSelectionChanged.connect(self.tableChanged)
+        self.table.itemDoubleClicked.connect(self.tableDbClicked)
+
+        box.addWidget(self.table)
+        # Line 1
+        hbox = QHBoxLayout()
+        label = QLabel('Set the interval')
+        self.line = QLineEdit('500')
+        self.line.setMaximumWidth(50)
+        btn = QPushButton('?')
+        btn.setMaximumWidth(20)
+        btn.clicked.connect(self.show_guide)
+        hbox.addWidget(label)
+        hbox.addWidget(self.line)
+        hbox.addWidget(btn)
+        box.addLayout(hbox)
+        # Select button
+        btn = QPushButton('Apply')
+        btn.clicked.connect(self.concat)
+        box.addWidget(btn)
+
+        gb.setLayout(box)
+        vbox.addWidget(gb)
+
+        btn = QPushButton('Replace')
+        btn.clicked.connect(self.replace)
+        vbox.addWidget(btn)
+
+        self.setLayout(vbox)
+
+    def show_guide(self):
+        dialog = QDialog(self)
+        dialog.setWindowTitle('Guide')
+
+        vbox = QVBoxLayout()
+        label = QLabel('연결할 파일들 사이의 간격.')
+        btn = QPushButton('OK')
+        btn.clicked.connect(dialog.close)
+        vbox.addWidget(label)
+        vbox.addWidget(btn)
+        dialog.setLayout(vbox)
+        dialog.show()
+    # 오디오 붙이기
+    def concat(self):
+        tmp_dir = os.path.join(os.getcwd(), 'temp')
+        os.makedirs(tmp_dir, exist_ok=True)
+        # 파일 전부 삭제
+        [os.remove(path) for path in glob.glob(os.path.join(tmp_dir, '*'))]
+        
+        sil_duration = int(self.line.text()) # ms 단위로 받음
+        dst = os.path.join(tmp_dir, f'{sil_duration}.wav')
+        ys = []
+        for src in self.files:
+            sr, y = wavfile.read(src)
+            if 'sil' not in locals():
+                sil = np.zeros(int(sr*sil_duration/1000), dtype=y.dtype)
+            ys.append(y)
+            ys.append(sil)
+        res = np.hstack(ys[:-1])
+        wavfile.write(dst, sr, res)
+        rowPosition = self.table.rowCount()
+        self.table.insertRow(rowPosition)
+        self.table.setItem(rowPosition, 0, QTableWidgetItem(os.path.basename(dst)))
+        self.playlist.append(dst)
+
+    # split 한 파일 원본과 교체
+    def replace(self):
+        selectedFile = self.playlist[self.selectedList[0]]
+        for originalFile in self.files:
+            print(f'remove {originalFile}')
+            os.remove(originalFile)
+        print(f'replace [{selectedFile}] >>>> [{self.files[0]}]')
+        shutil.move(selectedFile, self.files[0]) 
+        
+        self.close()
+        self.w.refresh()
+
+    def updateMediaChanged(self, index):
+        if index>=0:
+            self.table.selectRow(index)  
+
+    def tableChanged(self):
+        self.selectedList.clear()        
+        for item in self.table.selectedIndexes():
+            self.selectedList.append(item.row())
+            
+        self.selectedList = list(set(self.selectedList))
+            
+        if self.table.rowCount()!=0 and len(self.selectedList) == 0:
+            self.selectedList.append(0)
+    
+    def tableDbClicked(self, e):
+        self.player.play(self.playlist, self.selectedList[0], 0)
 
 # Time measurement dialog
 class TimeMeasurementWindow(QProgressDialog):
