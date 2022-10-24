@@ -117,13 +117,14 @@ def convert_num(string):
             spelledout = process_num(num, sino=True)
         string = string.replace(f"{num}{bn}", f"{spelledout}{bn_s}")
 
-    string = string.replace('십육', '심뉵')
-    string = string.replace('백육', '뱅뉵')
     # digit by digit for remaining digits
     digits = "0123456789"
     names = "영일이삼사오육칠팔구"
     for d, n in zip(digits, names):
         string = string.replace(d, '%'+n)
+
+    string = string.replace('십%육', '심뉵')
+    string = string.replace('백%육', '뱅뉵')
 
     return string
 
