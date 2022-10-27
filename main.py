@@ -193,6 +193,7 @@ class CWidget(QWidget):
             # 왼쪽 방향키 입력 시 재생
             elif event.key() == Qt.Key_Left:
                 self.player.play(self.playlist, self.selectedList[0], self.playOption)
+            # F5키 입력 시 새로고침
             elif event.key() in [Qt.Key_R, Qt.Key_F5]:
                 self.refresh()
 
@@ -265,10 +266,12 @@ class CWidget(QWidget):
             print('Select one')
             return
         selectedFile = self.playlist[self.selectedList[0]]
-        print(selectedFile)
+        print('*' * 50)
+        print('selectedFile:', selectedFile)
+        print('*' * 50)
+        self.player.stop()
         dialog = AudioSplitOneWindow(self, selectedFile)
         dialog.show()
-        self.player.stop()
     # 오디오 붙이는 함수
     def audio_concat(self):
         if self.audioDir is None or len(self.selectedList) == 1:

@@ -56,3 +56,5 @@ class CPlayer:
     def mediaChanged(self, e):
         self.parent.updateMediaChanged(self.playlist.currentIndex())       
  
+    def getCurrentMedia(self):
+        return self.playlist.currentMedia().canonicalUrl().toString()
