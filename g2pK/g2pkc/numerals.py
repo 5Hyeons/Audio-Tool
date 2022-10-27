@@ -123,6 +123,9 @@ def convert_num(string):
     for d, n in zip(digits, names):
         string = string.replace(d, '%'+n)
 
+    string = string.replace('십%육', '심뉵')
+    string = string.replace('백%육', '뱅뉵')
+
     return string
 
 
