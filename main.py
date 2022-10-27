@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
-from PyQt5.QtGui import QIcon
+from PyQt5.QtGui import QIcon, QColor, QTextCursor
 from player import *
 
 import sys
@@ -35,10 +35,11 @@ class CWidget(QWidget):
         vbox = QVBoxLayout()        
  
         # 1.Play List
-        box = QVBoxLayout()
         gb = QGroupBox('Play List')
         vbox.addWidget(gb)
          
+        box = QVBoxLayout()
+        hbox = QHBoxLayout()
         self.table = QTableWidget(0, 1, self)   
         header = self.table.horizontalHeader()          
         header.setSectionResizeMode(0, QHeaderView.Stretch)
@@ -51,8 +52,12 @@ class CWidget(QWidget):
         # signal 
         self.table.itemSelectionChanged.connect(self.tableChanged)
         self.table.itemDoubleClicked.connect(self.tableDbClicked)
-        # self.table.setAutoScroll(False)
-        box.addWidget(self.table)
+        self.textEdit = QTextEdit()
+        self.textEdit.setLineWrapMode(QTextEdit.NoWrap)
+        self.textEdit.hide()
+        hbox.addWidget(self.table)
+        hbox.addWidget(self.textEdit)
+        box.addLayout(hbox)
          
         hbox = QHBoxLayout()
         btnAddAudio = QPushButton('Add Audio')
@@ -66,10 +71,17 @@ class CWidget(QWidget):
         hbox = QHBoxLayout()
         btnSplit = QPushButton('Split')
         btnConcat = QPushButton('Concat')
+        btnShowEditor = QPushButton('Show Editor')
+        btnShowEditor.setCheckable(True)
+        btnUpdateText = QPushButton('Update')
         btnSplit.clicked.connect(self.audio_split_one)
         btnConcat.clicked.connect(self.audio_concat)
+        btnShowEditor.clicked.connect(lambda: self.textEdit.show() if btnShowEditor.isChecked() else self.textEdit.hide())
+        btnUpdateText.clicked.connect(self.update_text)
         hbox.addWidget(btnSplit)
         hbox.addWidget(btnConcat)
+        hbox.addWidget(btnShowEditor)
+        hbox.addWidget(btnUpdateText)
         box.addLayout(hbox)
 
         btnRefesh = QPushButton('Refresh')
@@ -249,6 +261,15 @@ class CWidget(QWidget):
             pbar = QProgressBar(self.table)
             pbar.setAlignment(Qt.AlignCenter)            
             self.table.setCellWidget(i,1, pbar)
+        self.textEdit.setText(''.join(lines))
+
+    def show_text(self):
+        self.textEdit.show()
+
+    def update_text(self):
+        texts = self.textEdit.toPlainText()
+        open(self.textFile[0], 'w' , encoding='utf-8').write(texts)
+        self.refresh()
 
     # UI 갱신 함수
     def refresh(self):
@@ -457,7 +478,12 @@ class CWidget(QWidget):
  
     def updateMediaChanged(self, index):
         if index>=0:
-            self.table.selectRow(index)            
+            self.table.selectRow(index)
+            if hasattr(self, 'textFile'):
+                cursor = QTextCursor(self.textEdit.document().findBlockByLineNumber(index))
+                self.textEdit.setTextCursor(cursor)
+                self.textEdit.moveCursor(QTextCursor.MoveOperation.EndOfLine, QTextCursor.MoveMode.KeepAnchor)
+                print(index)
  
  
 if __name__ == '__main__':
