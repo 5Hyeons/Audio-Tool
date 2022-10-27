@@ -298,15 +298,19 @@ class AudioSplitOneWindow(QDialog):
         self.createPlaylist(out_files)   
     # split 한 파일 원본과 교체
     def replace(self):
+        self.player.stop()
         print([self.playlist[s] for s in self.selectedList])
         if len(self.selectedList) == 1:
             print(f'replace [{self.playlist[self.selectedList[0]]}] >>>> [{self.file}]')
+            os.remove(self.file)
             shutil.move(self.playlist[self.selectedList[0]], self.file)
         elif len(self.selectedList) > 1:
             os.remove(self.file)
             for i in self.selectedList:
                 print(f'move [{self.playlist[i]}] >>>> [{os.path.dirname(self.file)}]')
                 shutil.move(self.playlist[i], os.path.dirname(self.file))
+        else:
+            return
         
         self.close()
         self.w.refresh()
