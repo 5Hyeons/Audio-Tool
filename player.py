@@ -13,14 +13,10 @@ class CPlayer:
          
         self.playlist = QMediaPlaylist()
  
-    def play(self, playlists, startRow=0, option=QMediaPlaylist.Sequential):       
-        if self.player.state() == QMediaPlayer.PausedState:
-            self.player.play()
-        else:              
-            self.createPlaylist(playlists, startRow, option)            
-            self.player.setPlaylist(self.playlist)
-            self.playlist.setCurrentIndex(startRow)
-            self.player.play()
+    def play(self, startRow=0):
+        self.stop()
+        self.playlist.setCurrentIndex(startRow)
+        self.player.play()
          
     def pause(self):
         self.player.pause()         
@@ -34,7 +30,7 @@ class CPlayer:
     def next(self):
         self.playlist.next()
  
-    def createPlaylist(self, playlists, startRow=0, option=QMediaPlaylist.Sequential):        
+    def createPlaylist(self, playlists, option=QMediaPlaylist.Sequential):        
         self.playlist.clear()      
  
         for path in playlists:
@@ -42,6 +38,7 @@ class CPlayer:
             self.playlist.addMedia(QMediaContent(url))
  
         self.playlist.setPlaybackMode(option)
+        self.player.setPlaylist(self.playlist)
  
     def updatePlayMode(self, option):
         self.playlist.setPlaybackMode(option)

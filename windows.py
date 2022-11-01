@@ -201,7 +201,6 @@ class AudioSplitOneWindow(QDialog):
         self.player = CPlayer(self)
         self.playlist = []
         self.selectedList = []
-    
 
     def initUI(self):
         self.setWindowTitle('Split one file')
@@ -255,6 +254,7 @@ class AudioSplitOneWindow(QDialog):
         vbox.addWidget(btn)
 
         self.setLayout(vbox)
+        self.show()
 
     def show_guide(self, n):
         dialog = QDialog(self)
@@ -303,18 +303,20 @@ class AudioSplitOneWindow(QDialog):
         elif len(self.selectedList) > 1:
             os.remove(self.file)
             for i in self.selectedList:
-                print(f'move [{self.playlist[i]}] >>>> [{os.path.dirname(self.file)}]')
-                shutil.move(self.playlist[i], os.path.dirname(self.file))
+                dst = os.path.join(os.path.dirname(self.file), os.path.basename(self.playlist[i]))
+                print(f'move [{self.playlist[i]}] >>>> [{dst}]')
+                if os.path.exists(dst):    os.remove(dst)
+                shutil.move(self.playlist[i], dst)
         else:
             return
         
         self.close()
-        self.w.refresh()
 
     def createPlaylist(self, files):
         self.playlist.clear()
         for file in files:
             self.playlist.append(file)
+        self.player.createPlaylist(playlists=self.playlist, option=0)
 
     def createTable(self, files):
         cnt = len(files)       
@@ -337,7 +339,7 @@ class AudioSplitOneWindow(QDialog):
             self.selectedList.append(0)
     
     def tableDbClicked(self, e):
-        self.player.play(self.playlist, self.selectedList[0], 0)
+        self.player.play(startRow=self.selectedList[0])
   
 class AudioConcatWindow(QDialog):
     '''
@@ -428,6 +430,7 @@ class AudioConcatWindow(QDialog):
         self.table.insertRow(rowPosition)
         self.table.setItem(rowPosition, 0, QTableWidgetItem(os.path.basename(dst)))
         self.playlist.append(dst)
+        self.player.createPlaylist(playlists=self.playlist, option=0)
 
     # split 한 파일 원본과 교체
     def replace(self):
@@ -439,7 +442,8 @@ class AudioConcatWindow(QDialog):
         shutil.move(selectedFile, self.files[0]) 
         
         self.close()
-        self.w.refresh()
+        self.w.addAudioList(refresh=True)
+        # self.w.refresh()
 
     def updateMediaChanged(self, index):
         if index>=0:
@@ -456,7 +460,7 @@ class AudioConcatWindow(QDialog):
             self.selectedList.append(0)
     
     def tableDbClicked(self, e):
-        self.player.play(self.playlist, self.selectedList[0], 0)
+        self.player.play(startRow=self.selectedList[0])
 
 # Time measurement dialog
 class TimeMeasurementWindow(QProgressDialog):

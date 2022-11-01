@@ -1,3 +1,5 @@
+from bisect import bisect
+from hashlib import new
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import QIcon, QColor, QTextCursor
@@ -8,8 +10,9 @@ import sys
 import os
 import shutil
 import random
-from jamo import h2j
+import bisect
 import glob
+from jamo import h2j
 
 from g2pK.g2pkc.g2pk import G2p
 from windows import *
@@ -23,6 +26,7 @@ class CWidget(QWidget):
         self.player = CPlayer(self)
         self.playlist = []
         self.selectedList = [0]
+        self.lastSelectedLine = 0
         self.playOption = QMediaPlaylist.Sequential
  
         self.setWindowTitle('오디오 검수 툴')
@@ -51,13 +55,12 @@ class CWidget(QWidget):
         # signal 
         self.table.itemSelectionChanged.connect(self.tableChanged)
         self.table.itemDoubleClicked.connect(self.tableDbClicked)
-        self.textEditor1 = TextEditor()
-        self.textEditor1.hide()
-        self.textEditor2 = TextEditor()
-        self.textEditor2.hide()
         hbox.addWidget(self.table)
-        hbox.addWidget(self.textEditor1)
-        hbox.addWidget(self.textEditor2)
+        self.textEditors = [TextEditor(), TextEditor()]
+        self.textEditors[0].hide()
+        self.textEditors[1].hide()
+        hbox.addWidget(self.textEditors[0])
+        hbox.addWidget(self.textEditors[1])
         box.addLayout(hbox)
         
         hbox = QHBoxLayout()
@@ -93,9 +96,9 @@ class CWidget(QWidget):
         btnShowEditor2 = QPushButton('Show Editor 2')
         btnShowEditor2.setCheckable(True)
         
-        btnShowEditor1.clicked.connect(lambda: self.textEditor1.show() if btnShowEditor1.isChecked() else self.textEditor1.hide())
+        btnShowEditor1.clicked.connect(lambda: self.textEditors[0].show() if btnShowEditor1.isChecked() else self.textEditors[0].hide())
         btnShowEditor2.clicked.connect(lambda: self.addAdditionalText(btnShowEditor2.isChecked()))
-        btnShowEditor2.clicked.connect(lambda: self.textEditor2.show() if btnShowEditor2.isChecked() else self.textEditor2.hide())
+        btnShowEditor2.clicked.connect(lambda: self.textEditors[1].show() if btnShowEditor2.isChecked() else self.textEditors[1].hide())
 
         hhbox.addWidget(btnShowEditor1)
         hhbox.addWidget(btnShowEditor2)
@@ -224,7 +227,7 @@ class CWidget(QWidget):
                 self.restore()
             # 왼쪽 방향키 입력 시 재생
             elif event.key() == Qt.Key_Left:
-                self.player.play(self.playlist, self.selectedList[0], self.playOption)
+                self.player.play(startRow=self.selectedList[0])
             # F5키 입력 시 새로고침
             elif event.key() in [Qt.Key_R, Qt.Key_F5]:
                 self.refresh()
@@ -242,23 +245,23 @@ class CWidget(QWidget):
     def addAudioList(self, refresh=False):
         if not refresh:
             self.audioDir = QFileDialog.getExistingDirectory(self, "Select directory containing audio files")
+            if os.name == 'nt':
+                self.audioDir = self.audioDir.replace('/', '\\')
+            self.deleteDir = os.path.join(self.audioDir, 'Deleted')
         if not hasattr(self, 'audioDir') or self.audioDir == '':
             return
-        if os.name == 'nt':
-            self.audioDir = self.audioDir.replace('/', '\\')
-        self.deleteDir = os.path.join(self.audioDir, 'Deleted')
         
         files = [os.path.join(self.audioDir, file) for file in sorted(os.listdir(self.audioDir)) if '.wav' in file]    
-
-        cnt = len(files)       
-        self.table.setRowCount(cnt)
-        for i in range(cnt):
-            self.table.setItem(i, 0, QTableWidgetItem(files[i]))
-            # pbar = QProgressBar(self.table)
-            # pbar.setAlignment(Qt.AlignCenter)            
-            # self.table.setCellWidget(i,1, pbar)
+        if not refresh:
+            cnt = len(files)       
+            self.table.setRowCount(cnt)
+            for i in range(cnt):
+                self.table.setItem(i, 0, QTableWidgetItem(files[i]))
              
-        self.createPlaylist(files)       
+        last_selection = self.selectedList[0]
+        self.createPlaylist(files=files)
+        self.selectedList = [last_selection]
+        self.updateMediaChanged(last_selection)    
  
     def addTextList(self, refresh=False):
         if not refresh: 
@@ -280,8 +283,9 @@ class CWidget(QWidget):
             self.table.setItem(i,0, QTableWidgetItem(line))
             pbar = QProgressBar(self.table)
             pbar.setAlignment(Qt.AlignCenter)            
-            self.table.setCellWidget(i,1, pbar)
-        self.textEditor1.textEdit.setText(''.join(lines))
+            self.table.setCellWidget(i, 1, pbar)
+        if not refresh:
+            self.textEditors[0].textEdit.setText(''.join(lines))
 
     def addAdditionalText(self, checked):
         if not checked: return
@@ -296,22 +300,21 @@ class CWidget(QWidget):
             lines = open(self.textFile2[0], 'r', encoding='UTF-8').read()
         except UnicodeDecodeError:
             lines = open(self.textFile2[0], 'r', encoding='cp949').read()
-        self.textEditor2.textEdit.setText(lines)
+        self.textEditors[1].textEdit.setText(lines)
 
     def update_text(self):
-        texts = self.textEditor1.textEdit.toPlainText()
         if hasattr(self, 'textFile') and self.textFile[0] != '':
+            texts = self.textEditors[0].textEdit.toPlainText()
             open(self.textFile[0], 'w' , encoding='utf-8').write(texts)
         if hasattr(self, 'textFile2') and self.textFile2[0] != '':
-            texts = self.textEditor2.textEdit.toPlainText()
+            texts = self.textEditors[1].textEdit.toPlainText()
             open(self.textFile2[0], 'w' , encoding='utf-8').write(texts)
-
 
     # UI 갱신 함수
     def refresh(self):
-        self.addAudioList(refresh=True)
-        self.addTextList(refresh=True)
         self.update_text()
+        self.addTextList(refresh=True)
+        self.addAudioList(refresh=True)
 
     # 오디오 자르는 함수
     def audio_split(self):
@@ -329,7 +332,8 @@ class CWidget(QWidget):
         print('*' * 50)
         self.player.stop()
         dialog = AudioSplitOneWindow(self, selectedFile)
-        dialog.show()
+        dialog.exec()
+        self.addAudioList(refresh=True)
     # 오디오 붙이는 함수
     def audio_concat(self):
         if self.audioDir is None or len(self.selectedList) == 1:
@@ -456,10 +460,12 @@ class CWidget(QWidget):
             newFileName = f'{len(os.listdir(self.deleteDir))+1}_{fileName}'
             # 제거
             shutil.move(selectedFile, os.path.join(self.deleteDir, newFileName))
-            print(selectedFile, 'is deleted')   
+            print(selectedFile, 'is deleted')
+        self.selectedList = [_index]
         # UI 갱신
-        self.refresh()
-        self.updateMediaChanged(_index)
+        # self.refresh()
+        self.addAudioList(refresh=True)
+
     # 삭제한 파일 되돌리는 함수
     def restore(self):
         '''
@@ -475,19 +481,25 @@ class CWidget(QWidget):
             return
         filename = os.path.basename(deletedFiles[-1])
         # 숫자 태그 제거
-        newFilename = filename[filename.find('_')+1:]
+        originalFilename = filename[filename.find('_')+1:]
+        originalPath = os.path.join(self.audioDir, originalFilename)
         # 복원
-        shutil.move(deletedFiles[-1], os.path.join(os.path.dirname(self.deleteDir), newFilename))
+        shutil.move(deletedFiles[-1], originalPath)
         # UI 화면 갱신
-        self.refresh()
-        self.updateMediaChanged(self.selectedList[0])
+        # self.refresh()
+        new_index = bisect.bisect_left(self.playlist, originalPath)
+        print(originalPath, new_index)
+        print('playlist', self.playlist)
+        self.addAudioList(refresh=True)
+        self.updateMediaChanged(new_index)
+        self.selectedList = [new_index]
 
     def btnClicked(self, id):
         if id==0:   #◀◀
             self.player.prev()
         elif id==1: #▶
             if self.table.rowCount()>0:
-                self.player.play(self.playlist, self.selectedList[0], self.playOption)
+                self.player.play(startRow=self.selectedList[0])
         elif id==2: #■
             self.player.stop()
         elif id==3: #▶▶
@@ -496,7 +508,7 @@ class CWidget(QWidget):
             self.guideDialog.show()
  
     def tableDbClicked(self, e):
-        self.player.play(self.playlist, self.selectedList[0], self.playOption)
+        self.player.play(startRow=self.selectedList[0])
  
     def volumeChanged(self):
         self.player.upateVolume(self.slider.value())
@@ -513,21 +525,23 @@ class CWidget(QWidget):
         self.playlist.clear()
         for file in files:
             self.playlist.append(file)
+        self.player.createPlaylist(playlists=self.playlist, option=self.playOption)
  
     def updateMediaChanged(self, index):
         if index>=0:
             self.table.selectRow(index)
-            self.updateTextEditor(self.textEditor1.textEdit, index)
-            self.updateTextEditor(self.textEditor2.textEdit, index)
+            self.updateTextEditor(self.textEditors, self.lastSelectedLine, 'White')
+            self.updateTextEditor(self.textEditors, index, color='Yellow')
+            self.lastSelectedLine = index
 
-    def updateTextEditor(self, textEdit, index):
-        textEdit.selectAll()
-        textEdit.setTextBackgroundColor(QColor("White"))
-        cursor = QTextCursor(textEdit.document().findBlockByLineNumber(index))
-        textEdit.setTextCursor(cursor)
-        textEdit.moveCursor(QTextCursor.MoveOperation.EndOfLine, QTextCursor.MoveMode.KeepAnchor)
-        textEdit.setTextBackgroundColor(QColor("Yellow"))
-        print(index)
+    def updateTextEditor(self, textEditors, index, color:str='Yellow') -> None:
+        for textEditor in textEditors:
+            textEdit = textEditor.textEdit
+            cursor = QTextCursor(textEdit.document().findBlockByLineNumber(index))
+            textEdit.setTextCursor(cursor)
+            textEdit.moveCursor(QTextCursor.MoveOperation.EndOfLine, QTextCursor.MoveMode.KeepAnchor)
+            textEdit.setTextBackgroundColor(QColor(color))
+            textEdit.moveCursor(QTextCursor.MoveOperation.StartOfLine, QTextCursor.MoveMode.MoveAnchor)
  
 
  
