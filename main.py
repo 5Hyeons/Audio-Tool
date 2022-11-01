@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import QIcon, QColor, QTextCursor
 from player import *
+from widgets import *
 
 import sys
 import os
@@ -23,8 +24,6 @@ class CWidget(QWidget):
         self.playlist = []
         self.selectedList = [0]
         self.playOption = QMediaPlaylist.Sequential
-        self.audioDir = None
-        self.textFile = None
  
         self.setWindowTitle('오디오 검수 툴')
         self.setWindowIcon(QIcon('AIPARK_logo.png'))
@@ -52,36 +51,57 @@ class CWidget(QWidget):
         # signal 
         self.table.itemSelectionChanged.connect(self.tableChanged)
         self.table.itemDoubleClicked.connect(self.tableDbClicked)
-        self.textEdit = QTextEdit()
-        self.textEdit.setLineWrapMode(QTextEdit.NoWrap)
-        self.textEdit.hide()
+        self.textEditor1 = TextEditor()
+        self.textEditor1.hide()
+        self.textEditor2 = TextEditor()
+        self.textEditor2.hide()
         hbox.addWidget(self.table)
-        hbox.addWidget(self.textEdit)
-        box.addLayout(hbox)
-         
-        hbox = QHBoxLayout()
-        btnAddAudio = QPushButton('Add Audio')
-        btnAddText = QPushButton('Add Text')
-        btnAddAudio.clicked.connect(self.addAudioList)
-        btnAddText.clicked.connect(self.addTextList)
-        hbox.addWidget(btnAddAudio)
-        hbox.addWidget(btnAddText)   
+        hbox.addWidget(self.textEditor1)
+        hbox.addWidget(self.textEditor2)
         box.addLayout(hbox)
         
         hbox = QHBoxLayout()
+        gb_sub = QGroupBox()
+        vvbox = QVBoxLayout()
+
+        btnAddAudio = QPushButton('Add Audio')
+        btnAddAudio.clicked.connect(self.addAudioList)
+        vvbox.addWidget(btnAddAudio)
+        
+        hhbox = QHBoxLayout()
         btnSplit = QPushButton('Split')
         btnConcat = QPushButton('Concat')
-        btnShowEditor = QPushButton('Show Editor')
-        btnShowEditor.setCheckable(True)
-        btnUpdateText = QPushButton('Update')
         btnSplit.clicked.connect(self.audio_split_one)
         btnConcat.clicked.connect(self.audio_concat)
-        btnShowEditor.clicked.connect(lambda: self.textEdit.show() if btnShowEditor.isChecked() else self.textEdit.hide())
-        btnUpdateText.clicked.connect(self.update_text)
-        hbox.addWidget(btnSplit)
-        hbox.addWidget(btnConcat)
-        hbox.addWidget(btnShowEditor)
-        hbox.addWidget(btnUpdateText)
+
+        hhbox.addWidget(btnSplit)
+        hhbox.addWidget(btnConcat)
+        vvbox.addLayout(hhbox)
+        gb_sub.setLayout(vvbox)
+        hbox.addWidget(gb_sub)
+
+        gb_sub = QGroupBox()
+        vvbox = QVBoxLayout()
+
+        btnAddText = QPushButton('Add Text')
+        btnAddText.clicked.connect(self.addTextList)
+        vvbox.addWidget(btnAddText)   
+
+        hhbox = QHBoxLayout()
+        btnShowEditor1 = QPushButton('Show Editor 1')
+        btnShowEditor1.setCheckable(True)
+        btnShowEditor2 = QPushButton('Show Editor 2')
+        btnShowEditor2.setCheckable(True)
+        
+        btnShowEditor1.clicked.connect(lambda: self.textEditor1.show() if btnShowEditor1.isChecked() else self.textEditor1.hide())
+        btnShowEditor2.clicked.connect(lambda: self.addAdditionalText(btnShowEditor2.isChecked()))
+        btnShowEditor2.clicked.connect(lambda: self.textEditor2.show() if btnShowEditor2.isChecked() else self.textEditor2.hide())
+
+        hhbox.addWidget(btnShowEditor1)
+        hhbox.addWidget(btnShowEditor2)
+        vvbox.addLayout(hhbox)
+        gb_sub.setLayout(vvbox)
+        hbox.addWidget(gb_sub)
         box.addLayout(hbox)
 
         btnRefesh = QPushButton('Refresh')
@@ -148,7 +168,7 @@ class CWidget(QWidget):
         # Function UI
 
         hbox = QHBoxLayout()
-        gb_sub = QGroupBox('audio')
+        gb_sub = QGroupBox()
         box = QVBoxLayout()
 
         hhbox = QHBoxLayout()
@@ -164,7 +184,7 @@ class CWidget(QWidget):
         gb_sub.setLayout(box)
         hbox.addWidget(gb_sub)
 
-        gb_sub = QGroupBox('text')
+        gb_sub = QGroupBox()
         box = QVBoxLayout()
         box.addWidget(btnTextG2p)
         box.addWidget(btnDecom)
@@ -222,7 +242,7 @@ class CWidget(QWidget):
     def addAudioList(self, refresh=False):
         if not refresh:
             self.audioDir = QFileDialog.getExistingDirectory(self, "Select directory containing audio files")
-        if self.audioDir is None or self.audioDir == '':
+        if not hasattr(self, 'audioDir') or self.audioDir == '':
             return
         if os.name == 'nt':
             self.audioDir = self.audioDir.replace('/', '\\')
@@ -247,7 +267,7 @@ class CWidget(QWidget):
                                             '',
                                             'Text (*.txt*)',
                                             )   
-        if self.textFile is None or self.textFile[0] == '':
+        if not hasattr(self, 'textFile') or self.textFile[0] == '':
             return
         try:
             lines = open(self.textFile[0], 'r', encoding='UTF-8').readlines()
@@ -261,20 +281,37 @@ class CWidget(QWidget):
             pbar = QProgressBar(self.table)
             pbar.setAlignment(Qt.AlignCenter)            
             self.table.setCellWidget(i,1, pbar)
-        self.textEdit.setText(''.join(lines))
+        self.textEditor1.textEdit.setText(''.join(lines))
 
-    def show_text(self):
-        self.textEdit.show()
+    def addAdditionalText(self, checked):
+        if not checked: return
+        self.textFile2 = QFileDialog.getOpenFileName(self,
+                                    'Select additional text',
+                                    '',
+                                    'Text (*.txt*)',
+                                    )
+        if self.textFile2 is None or self.textFile2[0] == '':
+            return
+        try:
+            lines = open(self.textFile2[0], 'r', encoding='UTF-8').read()
+        except UnicodeDecodeError:
+            lines = open(self.textFile2[0], 'r', encoding='cp949').read()
+        self.textEditor2.textEdit.setText(lines)
 
     def update_text(self):
-        texts = self.textEdit.toPlainText()
-        open(self.textFile[0], 'w' , encoding='utf-8').write(texts)
-        self.refresh()
+        texts = self.textEditor1.textEdit.toPlainText()
+        if hasattr(self, 'textFile') and self.textFile[0] != '':
+            open(self.textFile[0], 'w' , encoding='utf-8').write(texts)
+        if hasattr(self, 'textFile2') and self.textFile2[0] != '':
+            texts = self.textEditor2.textEdit.toPlainText()
+            open(self.textFile2[0], 'w' , encoding='utf-8').write(texts)
+
 
     # UI 갱신 함수
     def refresh(self):
         self.addAudioList(refresh=True)
         self.addTextList(refresh=True)
+        self.update_text()
 
     # 오디오 자르는 함수
     def audio_split(self):
@@ -306,6 +343,7 @@ class CWidget(QWidget):
 
     def audio_transform(self):
         pass
+    
     # 시간 측정
     def time_measurement(self):
         if self.audioDir is None or self.audioDir == '':
@@ -479,12 +517,19 @@ class CWidget(QWidget):
     def updateMediaChanged(self, index):
         if index>=0:
             self.table.selectRow(index)
-            if hasattr(self, 'textFile'):
-                cursor = QTextCursor(self.textEdit.document().findBlockByLineNumber(index))
-                self.textEdit.setTextCursor(cursor)
-                self.textEdit.moveCursor(QTextCursor.MoveOperation.EndOfLine, QTextCursor.MoveMode.KeepAnchor)
-                print(index)
+            self.updateTextEditor(self.textEditor1.textEdit, index)
+            self.updateTextEditor(self.textEditor2.textEdit, index)
+
+    def updateTextEditor(self, textEdit, index):
+        textEdit.selectAll()
+        textEdit.setTextBackgroundColor(QColor("White"))
+        cursor = QTextCursor(textEdit.document().findBlockByLineNumber(index))
+        textEdit.setTextCursor(cursor)
+        textEdit.moveCursor(QTextCursor.MoveOperation.EndOfLine, QTextCursor.MoveMode.KeepAnchor)
+        textEdit.setTextBackgroundColor(QColor("Yellow"))
+        print(index)
  
+
  
 if __name__ == '__main__':
     app = QApplication(sys.argv)
