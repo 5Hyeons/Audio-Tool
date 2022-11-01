@@ -55,7 +55,7 @@ class AudioSplitWindow(QDialog, QWidget):
         # Line 3
         hbox = QHBoxLayout()
         self.label3 = QLabel('Set a silent threshold.')
-        self.line3 = QLineEdit('45')
+        self.line3 = QLineEdit('-45')
         self.line3.setMaximumWidth(50)
         btn = QPushButton('?')
         btn.setMaximumWidth(20)
@@ -105,7 +105,7 @@ class AudioSplitWindow(QDialog, QWidget):
 
         self.name = self.line1.text()
         self.min_sil_len = int(self.line2.text())
-        self.silence_thresh = -int(self.line3.text())
+        self.silence_thresh = int(self.line3.text())
         self.offset = int(self.line4.text())
         print(self.name, self.silence_thresh, self.min_sil_len)
 
@@ -174,7 +174,7 @@ class AudioSplitWindow(QDialog, QWidget):
         elif n == 3:
             label.setText('Parameter: 소리 없는 구간의 최소 길이.\n(default: 1200, 단위 ms)')
         elif n == 4:
-            label.setText('Parameter: 침묵 구간의 기준.\n낮을 수록 관용적이고 높을수록 깐깐합니다.\n(default: 45, 단위 dB)')
+            label.setText('Parameter: 침묵 구간의 기준.\n낮을 수록 관용적이고 높을수록 깐깐합니다.\n(default: -45, 단위 dB)')
         elif n == 5:
             label.setText('파일 생성 시 offset으로 설정한 번호 부터 차례대로 생성됩니다.')
         dialog.show()
@@ -190,7 +190,7 @@ class AudioSplitWindow(QDialog, QWidget):
 
 class AudioSplitOneWindow(QDialog):
     '''
-    문제 있는 오디오 하나를 여러개로 쪼개서 괜찮은 부분만 취하는 클래스입니다..
+    문제 있는 오디오 하나를 여러개로 쪼개서 괜찮은 부분만 취하는 클래스입니다.
     '''
     def __init__(self, w, file):
         super().__init__(w)
@@ -221,7 +221,7 @@ class AudioSplitOneWindow(QDialog):
         # Line 1
         hbox = QHBoxLayout()
         label = QLabel('Set a minimum length of silence.')
-        self.line1 = QLineEdit('1000')
+        self.line1 = QLineEdit('800')
         self.line1.setMaximumWidth(50)
         btn = QPushButton('?')
         btn.setMaximumWidth(20)
@@ -233,7 +233,7 @@ class AudioSplitOneWindow(QDialog):
         # Line 2
         hbox = QHBoxLayout()
         label = QLabel('Set a silent threshold.')
-        self.line2 = QLineEdit('45')
+        self.line2 = QLineEdit('-45')
         self.line2.setMaximumWidth(50)
         btn = QPushButton('?')
         btn.setMaximumWidth(20)
@@ -269,9 +269,9 @@ class AudioSplitOneWindow(QDialog):
         dialog.setLayout(vbox)
         
         if n == 3:
-            label.setText('Parameter: 소리 없는 구간의 최소 길이.\n(default: 1200, 단위 ms)')
+            label.setText('Parameter: 소리 없는 구간의 최소 길이.\n(default: 800, 단위 ms)')
         elif n == 4:
-            label.setText('Parameter: 침묵 구간의 기준.\n낮을 수록 관용적이고 높을수록 깐깐합니다.\n(default: 45, 단위 dB)')
+            label.setText('Parameter: 침묵 구간의 기준.\n낮을 수록 관용적이고 높을수록 깐깐합니다.\n(default: -45, 단위 dB)')
         
         dialog.show()
     # 오디오 쪼개기
@@ -282,7 +282,7 @@ class AudioSplitOneWindow(QDialog):
         [os.remove(path) for path in glob.glob(os.path.join(tmp_dir, '*'))]
         seg = utils.AudioSegment.from_wav(self.file)
         min_silence_len = int(self.line1.text())
-        silence_thresh = -int(self.line2.text())
+        silence_thresh = int(self.line2.text())
         audio_chunks = utils.split_on_silence(seg, min_silence_len, silence_thresh)
         out_files = []
         for i, chunk in enumerate(audio_chunks):
@@ -290,12 +290,8 @@ class AudioSplitOneWindow(QDialog):
             out_files.append(out_file)
             chunk.export(out_file, format='wav')
 
-        cnt = len(out_files)       
-        self.table.setRowCount(cnt)
-        for i in range(cnt):
-            self.table.setItem(i, 0, QTableWidgetItem(os.path.basename(out_files[i])))
-             
-        self.createPlaylist(out_files)   
+        self.createTable(out_files)
+        self.createPlaylist(out_files)
     # split 한 파일 원본과 교체
     def replace(self):
         self.player.stop()
@@ -319,6 +315,12 @@ class AudioSplitOneWindow(QDialog):
         self.playlist.clear()
         for file in files:
             self.playlist.append(file)
+
+    def createTable(self, files):
+        cnt = len(files)       
+        self.table.setRowCount(cnt)
+        for i in range(cnt):
+            self.table.setItem(i, 0, QTableWidgetItem(os.path.basename(files[i])))
 
     def updateMediaChanged(self, index):
         if index>=0:
