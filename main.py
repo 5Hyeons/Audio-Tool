@@ -34,7 +34,7 @@ class CWidget(QWidget):
         self.initUI()
  
     def initUI(self):
-        self.initGuide()
+        self.initDialog()
         vbox = QVBoxLayout()        
  
         # 1.Play List
@@ -166,7 +166,7 @@ class CWidget(QWidget):
         btnsort.clicked.connect(self.file_sort_dialog)
         btnDecom = QPushButton('Make filelist')
         btnDecom.setStyleSheet('color:black; font:bold;')
-        btnDecom.clicked.connect(self.make_filelist)
+        btnDecom.clicked.connect(self.make_filelist_dialog)
 
         # Function UI
 
@@ -200,7 +200,12 @@ class CWidget(QWidget):
         self.setLayout(vbox)
         self.show()
  
-    def initGuide(self):
+    def initDialog(self):
+        # Audio Split One Window
+        self.AudioSplitWindow = AudioSplitWindow(self)
+        self.AudioSplitOneWindow = AudioSplitOneWindow(self)
+        self.AudioConcatWindow = AudioConcatWindow(self)
+        # guide dialog
         self.guideDialog = QDialog(self)
         self.guideDialog.setWindowTitle('Guide')
         self.guideDialog.resize(300, 300)
@@ -215,6 +220,52 @@ class CWidget(QWidget):
         self.guideBtn = QPushButton('OK', self.guideDialog)
         self.guideBtn.move(110, 265)
         self.guideBtn.clicked.connect(lambda: self.guideDialog.close())
+        # sort dialog
+        self.sort_dialog = QDialog(self)
+        self.sort_dialog.setWindowTitle('Audio sort')
+
+        vbox = QVBoxLayout()
+        hbox = QHBoxLayout()
+        label = QLabel('file name')
+        label2 = QLabel('offset')
+        hbox.addWidget(label)
+        hbox.addWidget(label2)
+        vbox.addLayout(hbox)
+
+        hbox = QHBoxLayout()
+        self.sort_line = QLineEdit('split')
+        self.sort_offset = QLineEdit('1')
+        hbox.addWidget(self.sort_line)
+        hbox.addWidget(self.sort_offset)
+        vbox.addLayout(hbox)
+
+        btn = QPushButton('OK')
+        btn.clicked.connect(self.file_sort)
+        vbox.addWidget(btn)
+
+        self.sort_dialog.setLayout(vbox)
+        # filelist dialog
+        self.filelist_dialog = QDialog(self)
+        self.filelist_dialog.setWindowTitle('Make filelist')
+
+        vbox = QVBoxLayout()
+        hbox = QHBoxLayout()
+        self.filelist_ckboxes = [QCheckBox('G2p'), QCheckBox('jamo'), QCheckBox('Validation')]
+        for ckbox in self.filelist_ckboxes:
+            hbox.addWidget(ckbox)
+        vbox.addLayout(hbox)
+        
+        hbox = QHBoxLayout()
+        label = QLabel('name :')
+        self.filelist_name = QLineEdit('filelist.txt')
+        hbox.addWidget(label)
+        hbox.addWidget(self.filelist_name)
+        vbox.addLayout(hbox)
+
+        btn = QPushButton('OK')
+        btn.clicked.connect(self.make_filelist)
+        vbox.addWidget(btn)
+        self.filelist_dialog.setLayout(vbox)
 
     def keyPressEvent(self, event):
         if self.table.rowCount() != 0:
@@ -231,6 +282,9 @@ class CWidget(QWidget):
             # F5키 입력 시 새로고침
             elif event.key() in [Qt.Key_R, Qt.Key_F5]:
                 self.refresh()
+            # F4키 입력 시 재생 중지
+            elif event.key() == Qt.Key_F4:
+                self.player.stop()
 
     def tableChanged(self):
         self.selectedList.clear()        
@@ -318,12 +372,10 @@ class CWidget(QWidget):
 
     # 오디오 자르는 함수
     def audio_split(self):
-        self.hide()
-        self.second = AudioSplitWindow()
-        self.second.exec()
-        self.show()
+        self.AudioSplitWindow.exec()
+
     def audio_split_one(self):
-        if self.audioDir is None or len(self.selectedList) != 1:
+        if not hasattr(self, 'audioDir') or len(self.selectedList) != 1:
             print('Select one')
             return
         selectedFile = self.playlist[self.selectedList[0]]
@@ -331,26 +383,28 @@ class CWidget(QWidget):
         print('selectedFile:', selectedFile)
         print('*' * 50)
         self.player.stop()
-        dialog = AudioSplitOneWindow(self, selectedFile)
-        dialog.exec()
+        # exec dialog
+        self.AudioSplitOneWindow.set_file(selectedFile)
+        self.AudioSplitOneWindow.exec()
+        # update audio list
         self.addAudioList(refresh=True)
     # 오디오 붙이는 함수
     def audio_concat(self):
-        if self.audioDir is None or len(self.selectedList) == 1:
+        if not hasattr(self, 'audioDir') or len(self.selectedList) == 1:
             print('Select multiple files')
             return
-        files = sorted([self.playlist[i] for i in self.selectedList])
-        print(files)
-        dialog = AudioConcatWindow(self, files)
-        dialog.show()
         self.player.stop()
+        files = sorted([self.playlist[i] for i in self.selectedList])
+        # exec dialog
+        self.AudioConcatWindow.set_files(files)
+        self.AudioConcatWindow.exec()
 
     def audio_transform(self):
         pass
     
     # 시간 측정
     def time_measurement(self):
-        if self.audioDir is None or self.audioDir == '':
+        if not hasattr(self, 'audioDir') or self.audioDir == '':
             return
         wavs = glob.glob(os.path.join(self.audioDir, '*.wav'))
         third = TimeMeasurementWindow(self, wavs)
@@ -358,32 +412,8 @@ class CWidget(QWidget):
 
     # 파일 정렬
     def file_sort_dialog(self):
-        if self.audioDir is None or self.audioDir == '':
+        if not hasattr(self, 'audioDir') or self.audioDir == '':
             return
-        print(self.audioDir)
-        self.sort_dialog = QDialog(self)
-        self.sort_dialog.setWindowTitle('Audio sort')
-
-        vbox = QVBoxLayout()
-        hbox = QHBoxLayout()
-        label = QLabel('file name')
-        label2 = QLabel('offset')
-        hbox.addWidget(label)
-        hbox.addWidget(label2)
-        vbox.addLayout(hbox)
-
-        hbox = QHBoxLayout()
-        self.sort_line = QLineEdit('split')
-        self.sort_offset = QLineEdit('1')
-        hbox.addWidget(self.sort_line)
-        hbox.addWidget(self.sort_offset)
-        vbox.addLayout(hbox)
-
-        btn = QPushButton('OK')
-        btn.clicked.connect(self.file_sort)
-        vbox.addWidget(btn)
-
-        self.sort_dialog.setLayout(vbox)
         self.sort_dialog.show()
 
     def file_sort(self):
@@ -416,29 +446,46 @@ class CWidget(QWidget):
             lines_g2p = lines_g2p.replace('*', '')
             f.write(lines_g2p)
 
+    def make_filelist_dialog(self):
+        if not hasattr(self, 'audioDir') or self.audioDir == '' or not hasattr(self, 'textFile') or self.textFile[0] == '':
+            return
+        self.filelist_dialog.show()
+
     # phoneme to jamo
     def make_filelist(self):
-        if self.audioDir is None or self.audioDir == '' or self.textFile is None or self.textFile[0] == '':
-            return
-        name = os.path.basename(self.audioDir)
-        dst_train = os.path.join(os.path.dirname(self.audioDir), 'train_filelist.txt.cleaned')
-        dst_valid = os.path.join(os.path.dirname(self.audioDir), 'valid_filelist.txt.cleaned')
+        _g2p, _jamo, _validation = [ckbx.isChecked() for ckbx in self.filelist_ckboxes]
+
+        dst = os.path.join(os.path.dirname(self.audioDir), self.filelist_name.text())
+        dst_train = os.path.join(os.path.dirname(self.audioDir), 'train_' + self.filelist_name.text())
+        dst_valid = os.path.join(os.path.dirname(self.audioDir), 'valid_' + self.filelist_name.text())
         
         wavs = sorted(glob.glob(os.path.join(self.audioDir, '*.wav')))
-        lines = open(self.textFile[0], 'r', encoding='UTF-8').readlines()
-        random.seed(1997)
-        valid_idxs = random.sample(range(len(lines)), min(10, len(lines)//10))
+        lines = open(self.textFile[0], 'r', encoding='UTF-8').read()
+        if _g2p: lines = G2p()(lines, descriptive=True, to_syl=True, use_dict=True)
+        if _jamo: lines = h2j(lines)
+        lines = lines.split('\n')
 
-        with open(dst_train, 'w', encoding='utf-8') as t, open(dst_valid, 'w', encoding='utf-8') as v:
-            for i in range(len(lines)):
-                filename = os.path.basename(wavs[i])
-                line = lines[i]
-                line = h2j(line.rstrip('\n'))
-                new_line = f'{name}/{filename}|0|{line}\n'
-                if i in valid_idxs:
-                    v.write(new_line)
-                else:
-                    t.write(new_line)
+        random.seed(1997)
+        idxs = range(min(len(wavs), len(lines)))
+        valid_idxs = random.sample(idxs, min(10, len(idxs)//10))
+        if _validation:
+            t = open(dst_train, 'w', encoding='UTF8')
+            v = open(dst_valid, 'w', encoding='UTF8')
+        else:
+            t = open(dst, 'w', encoding='utf-8')
+
+        for i in idxs:
+            filename = os.path.basename(wavs[i])
+            new_line = f'{filename}|{lines[i]}\n'
+
+            if _validation and i in valid_idxs:
+                v.write(new_line)
+            else:
+                t.write(new_line)
+
+        t.close()
+        if 'v' in locals(): v.close()
+        self.filelist_dialog.close()
 
     # 파일 삭제
     def delete(self):
@@ -541,6 +588,7 @@ class CWidget(QWidget):
             textEdit.setTextCursor(cursor)
             textEdit.moveCursor(QTextCursor.MoveOperation.EndOfLine, QTextCursor.MoveMode.KeepAnchor)
             textEdit.setTextBackgroundColor(QColor(color))
+            textEdit.moveCursor(QTextCursor.MoveOperation.Down, QTextCursor.MoveMode.MoveAnchor)
             textEdit.moveCursor(QTextCursor.MoveOperation.StartOfLine, QTextCursor.MoveMode.MoveAnchor)
  
 

@@ -10,6 +10,7 @@ class TextEditor(QWidget):
         vbox = QVBoxLayout()
         self.textEdit = QTextEdit()
         self.textEdit.setLineWrapMode(QTextEdit.NoWrap)
+        self.textEdit.setUndoRedoEnabled(True)
         vbox.addWidget(self.textEdit)
 
         hbox = QHBoxLayout()

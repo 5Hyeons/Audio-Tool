@@ -13,14 +13,13 @@ from Threads import Measurement, SplitAudio
 from player import *
 
 
-class AudioSplitWindow(QDialog, QWidget):
+class AudioSplitWindow(QDialog):
     '''원본 오디오 파일을 자르는 클래스입니다.'''
-    def __init__(self):
-        super().__init__()
+    def __init__(self, w):
+        super().__init__(w)
         self.initDialog()
         self.initUI()
         self.initThread()
-        self.show()
         self.text = ''
 
     def initUI(self):
@@ -187,17 +186,14 @@ class AudioSplitWindow(QDialog, QWidget):
     def update_pbar(self, data):
         self.pbar.setValue(data)
 
-
 class AudioSplitOneWindow(QDialog):
     '''
     문제 있는 오디오 하나를 여러개로 쪼개서 괜찮은 부분만 취하는 클래스입니다.
     '''
-    def __init__(self, w, file):
+    def __init__(self, w):
         super().__init__(w)
         self.initUI()
         self.w = w
-        self.file = file
-        self.file_bn = os.path.basename(file)
         self.player = CPlayer(self)
         self.playlist = []
         self.selectedList = []
@@ -254,7 +250,10 @@ class AudioSplitOneWindow(QDialog):
         vbox.addWidget(btn)
 
         self.setLayout(vbox)
-        self.show()
+
+    def set_file(self, file):
+        self.file = file
+        self.table.setRowCount(0)
 
     def show_guide(self, n):
         dialog = QDialog(self)
@@ -285,8 +284,9 @@ class AudioSplitOneWindow(QDialog):
         silence_thresh = int(self.line2.text())
         audio_chunks = utils.split_on_silence(seg, min_silence_len, silence_thresh)
         out_files = []
+        file_bn = os.path.basename(self.file)
         for i, chunk in enumerate(audio_chunks):
-            out_file = os.path.join(tmp_dir, f'{self.file_bn[:-4]}_{i+1:02}.wav')
+            out_file = os.path.join(tmp_dir, f'{file_bn[:-4]}_{i+1:02}.wav')
             out_files.append(out_file)
             chunk.export(out_file, format='wav')
 
@@ -345,11 +345,10 @@ class AudioConcatWindow(QDialog):
     '''
     선택한 오디오 여러개를 하나로 합치는 클래스입니다.
     '''
-    def __init__(self, w, files):
+    def __init__(self, w):
         super().__init__(w)
         self.initUI()
         self.w = w
-        self.files = files
         self.player = CPlayer(self)
         self.playlist = []
         self.selectedList = []
@@ -396,6 +395,10 @@ class AudioConcatWindow(QDialog):
 
         self.setLayout(vbox)
 
+    def set_files(self, files):
+        self.files = files
+        self.table.setRowCount(0)
+
     def show_guide(self):
         dialog = QDialog(self)
         dialog.setWindowTitle('Guide')
@@ -408,8 +411,12 @@ class AudioConcatWindow(QDialog):
         vbox.addWidget(btn)
         dialog.setLayout(vbox)
         dialog.show()
+
     # 오디오 붙이기
     def concat(self):
+        # 파일 등록 안돼있으면 리턴
+        if not hasattr(self, 'files'):
+            return
         tmp_dir = os.path.join(os.getcwd(), 'temp')
         os.makedirs(tmp_dir, exist_ok=True)
         # 파일 전부 삭제
@@ -483,7 +490,6 @@ class TimeMeasurementWindow(QProgressDialog):
         
     @pyqtSlot(int)
     def update(self, data):
-        print(data)
         self.setValue(data)
         if data == self.maximum():
             self.setLabelText(f"total time is {self.consumer.total_time//60} m")
