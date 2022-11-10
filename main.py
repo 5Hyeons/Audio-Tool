@@ -306,13 +306,13 @@ class CWidget(QWidget):
             return
         
         files = [os.path.join(self.audioDir, file) for file in sorted(os.listdir(self.audioDir)) if '.wav' in file]    
+
+        last_selection = self.selectedList[0]
+        cnt = len(files)       
+        self.table.setRowCount(cnt)
         if not refresh:
-            cnt = len(files)       
-            self.table.setRowCount(cnt)
             for i in range(cnt):
                 self.table.setItem(i, 0, QTableWidgetItem(files[i]))
-             
-        last_selection = self.selectedList[0]
         self.createPlaylist(files=files)
         self.selectedList = [last_selection]
         self.updateMediaChanged(last_selection)    
@@ -333,11 +333,8 @@ class CWidget(QWidget):
 
         for i, line in enumerate(lines):
             line = line.rstrip('\n')
-            #print(line)
             self.table.setItem(i,0, QTableWidgetItem(line))
-            pbar = QProgressBar(self.table)
-            pbar.setAlignment(Qt.AlignCenter)            
-            self.table.setCellWidget(i, 1, pbar)
+
         if not refresh:
             self.textEditors[0].textEdit.setText(''.join(lines))
 
@@ -367,8 +364,8 @@ class CWidget(QWidget):
     # UI 갱신 함수
     def refresh(self):
         self.update_text()
-        self.addTextList(refresh=True)
         self.addAudioList(refresh=True)
+        self.addTextList(refresh=True)
 
     # 오디오 자르는 함수
     def audio_split(self):
@@ -396,7 +393,7 @@ class CWidget(QWidget):
         self.player.stop()
         files = sorted([self.playlist[i] for i in self.selectedList])
         # exec dialog
-        self.AudioConcatWindow.set_files(files)
+        self.AudioConcatWindow.setup(files)
         self.AudioConcatWindow.exec()
 
     def audio_transform(self):

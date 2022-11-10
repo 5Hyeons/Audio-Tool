@@ -395,9 +395,15 @@ class AudioConcatWindow(QDialog):
 
         self.setLayout(vbox)
 
-    def set_files(self, files):
+    def setup(self, files):
         self.files = files
         self.table.setRowCount(0)
+        self.playlist.clear()
+
+        self.tmp_dir = os.path.join(os.getcwd(), 'temp')
+        os.makedirs(self.tmp_dir, exist_ok=True)
+        # 파일 전부 삭제
+        [os.remove(path) for path in glob.glob(os.path.join(self.tmp_dir, '*'))]
 
     def show_guide(self):
         dialog = QDialog(self)
@@ -417,13 +423,9 @@ class AudioConcatWindow(QDialog):
         # 파일 등록 안돼있으면 리턴
         if not hasattr(self, 'files'):
             return
-        tmp_dir = os.path.join(os.getcwd(), 'temp')
-        os.makedirs(tmp_dir, exist_ok=True)
-        # 파일 전부 삭제
-        [os.remove(path) for path in glob.glob(os.path.join(tmp_dir, '*'))]
         
         sil_duration = int(self.line.text()) # ms 단위로 받음
-        dst = os.path.join(tmp_dir, f'{sil_duration}.wav')
+        dst = os.path.join(self.tmp_dir, f'{sil_duration}.wav')
         ys = []
         for src in self.files:
             sr, y = wavfile.read(src)
