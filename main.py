@@ -91,17 +91,17 @@ class CWidget(QWidget):
         vvbox.addWidget(btnAddText)   
 
         hhbox = QHBoxLayout()
-        btnShowEditor1 = QPushButton('Show Editor 1')
-        btnShowEditor1.setCheckable(True)
-        btnShowEditor2 = QPushButton('Show Editor 2')
-        btnShowEditor2.setCheckable(True)
+        self.btnShowEditor1 = QPushButton('Show Editor 1')
+        self.btnShowEditor1.setCheckable(True)
+        self.btnShowEditor2 = QPushButton('Show Editor 2')
+        self.btnShowEditor2.setCheckable(True)
         
-        btnShowEditor1.clicked.connect(lambda: self.textEditors[0].show() if btnShowEditor1.isChecked() else self.textEditors[0].hide())
-        btnShowEditor2.clicked.connect(lambda: self.addAdditionalText(btnShowEditor2.isChecked()))
-        btnShowEditor2.clicked.connect(lambda: self.textEditors[1].show() if btnShowEditor2.isChecked() else self.textEditors[1].hide())
+        self.btnShowEditor1.clicked.connect(lambda: self.textEditors[0].show() if self.btnShowEditor1.isChecked() else self.textEditors[0].hide())
+        self.btnShowEditor2.clicked.connect(lambda: self.addAdditionalText(self.btnShowEditor2.isChecked()))
+        self.btnShowEditor2.clicked.connect(lambda: self.textEditors[1].show() if self.btnShowEditor2.isChecked() else self.textEditors[1].hide())
 
-        hhbox.addWidget(btnShowEditor1)
-        hhbox.addWidget(btnShowEditor2)
+        hhbox.addWidget(self.btnShowEditor1)
+        hhbox.addWidget(self.btnShowEditor2)
         vvbox.addLayout(hhbox)
         gb_sub.setLayout(vvbox)
         hbox.addWidget(gb_sub)
@@ -282,9 +282,20 @@ class CWidget(QWidget):
             # F5키 입력 시 새로고침
             elif event.key() in [Qt.Key_R, Qt.Key_F5]:
                 self.refresh()
-            # F4키 입력 시 재생 중지
+            # F4키 입력
             elif event.key() == Qt.Key_F4:
-                self.player.stop()
+                # 재생 중이면 중지
+                if self.player.state() == QMediaPlayer.State.PlayingState:
+                    self.player.stop()
+                # Editor가 열려있는 경우 커서 위치의 파일 재생, Editor 둘 다 열려있는 경우 첫 번째 것을 따름.
+                elif self.btnShowEditor1.isChecked():
+                    blockNumber = self.textEditors[0].textEdit.textCursor().blockNumber()
+                    self.player.play(startRow=blockNumber)
+                elif self.btnShowEditor2.isChecked():
+                    blockNumber = self.textEditors[1].textEdit.textCursor().blockNumber()
+                    self.player.play(startRow=blockNumber)
+                else:
+                    self.player.play(startRow=self.selectedList[0])
 
     def tableChanged(self):
         self.selectedList.clear()        

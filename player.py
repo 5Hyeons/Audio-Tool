@@ -13,6 +13,9 @@ class CPlayer:
          
         self.playlist = QMediaPlaylist()
  
+    def state(self):
+        return self.player.state()
+
     def play(self, startRow=0):
         self.stop()
         self.playlist.setCurrentIndex(startRow)
@@ -22,7 +25,10 @@ class CPlayer:
         self.player.pause()         
  
     def stop(self):
-        self.player.stop()
+        if self.player.state() == QMediaPlayer.State.StoppedState:
+            self.player.play()
+        else:
+            self.player.stop()
  
     def prev(self):        
         self.playlist.previous()     
