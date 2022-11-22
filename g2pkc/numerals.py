@@ -30,9 +30,9 @@ def process_num(num, sino=True):
 
     digits = "123456789"
     names = "일이삼사오육칠팔구"
-    digit2name = {d: '%'+n for d, n in zip(digits, names)}
+    digit2name = {d: '^'+n for d, n in zip(digits, names)}
 
-    modifiers = "한 두 세 네 다섯 %여섯 일곱 %여덟 아홉"
+    modifiers = "한 두 세 네 다섯 ^여섯 일곱 ^여덟 아홉"
     decimals = "열 스물 서른 마흔 쉰 예순 일흔 여든 아흔"
     digit2mod = {d: mod for d, mod in zip(digits, modifiers.split())}
     digit2dec = {d: dec for d, dec in zip(digits, decimals.split())}
@@ -121,10 +121,10 @@ def convert_num(string):
     digits = "0123456789"
     names = "영일이삼사오육칠팔구"
     for d, n in zip(digits, names):
-        string = string.replace(d, '%'+n)
+        string = string.replace(d, '^'+n)
 
-    string = string.replace('십%육', '심뉵')
-    string = string.replace('백%육', '뱅뉵')
+    string = string.replace('십^육', '심뉵')
+    string = string.replace('백^육', '뱅뉵')
 
     return string
 

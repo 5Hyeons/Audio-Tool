@@ -45,7 +45,7 @@ def josa_ui(inp, descriptive=False, verbose=False):
     rule = rule_id2text["5.4.2"]
     # 실제로 언중은 높은 확률로 조사 '의'는 [ㅔ]로 발음한다.
     if descriptive:
-        out = re.sub("([^*])의/J", r"\1에", inp)
+        out = re.sub("([^^])의/J", r"\1에", inp)
     else:
         out = inp.replace("/J", "")
     # gloss(verbose, out, inp, rule)
@@ -56,7 +56,7 @@ def vowel_ui(inp, descriptive=False, verbose=False):
     rule = rule_id2text["5.4.1"]
     # 실제로 언중은 높은 확률로 단어의 첫음절 이외의 '의'는 [ㅣ]로 발음한다."""
     if descriptive:
-        out = re.sub("([^*\s]ᄋ)ᅴ", r"\1ᅵ", inp)
+        out = re.sub("([^^\s]ᄋ)ᅴ", r"\1ᅵ", inp)
     else:
         out = inp
     # gloss(verbose, out, inp, rule)
