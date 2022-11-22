@@ -127,5 +127,3 @@ If you use our software for research, please cite:
   howpublished = {\url{https://github.com/Kyubyong/g2pk}}
 }
 ```
-
-### 위 모듈의 오류를 잡고 몇 가지 예외 사항을 추가함
