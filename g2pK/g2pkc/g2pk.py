@@ -4,7 +4,6 @@ https://github.com/kyubyong/g2pK
 '''
 
 import os, re
-
 import nltk
 from jamo import h2j
 from nltk.corpus import cmudict
@@ -135,7 +134,7 @@ class G2p(object):
         if to_syl:
             inp = compose(inp)
         # 룰 적용하고 싶지 않을 때 * 사용.
-        inp = inp.replace('%', '')
+        inp = inp.replace('^', '')
         return inp
 
 if __name__ == "__main__":
