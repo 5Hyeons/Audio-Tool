@@ -54,7 +54,7 @@ class AudioSplitWindow(QDialog):
         # Line 3
         hbox = QHBoxLayout()
         self.label3 = QLabel('Set a silent threshold.')
-        self.line3 = QLineEdit('-45')
+        self.line3 = QLineEdit('-50')
         self.line3.setMaximumWidth(50)
         btn = QPushButton('?')
         btn.setMaximumWidth(20)
@@ -173,7 +173,7 @@ class AudioSplitWindow(QDialog):
         elif n == 3:
             label.setText('Parameter: 소리 없는 구간의 최소 길이.\n(default: 1200, 단위 ms)')
         elif n == 4:
-            label.setText('Parameter: 침묵 구간의 기준.\n높을 수록 관용적이고 낮을수록 깐깐합니다.\n(default: -45, 단위 dB)')
+            label.setText('Parameter: 침묵 구간의 기준.\n높을 수록 관용적이고 낮을수록 깐깐합니다.\n(default: -50, 단위 dB)')
         elif n == 5:
             label.setText('파일 생성 시 offset으로 설정한 번호 부터 차례대로 생성됩니다.')
         dialog.show()
@@ -228,7 +228,7 @@ class AudioSplitOneWindow(QDialog):
         # Line 2
         hbox = QHBoxLayout()
         label = QLabel('Set a silent threshold.')
-        self.line2 = QLineEdit('-45')
+        self.line2 = QLineEdit('-50')
         self.line2.setMaximumWidth(50)
         btn = QPushButton('?')
         btn.setMaximumWidth(20)
@@ -270,7 +270,7 @@ class AudioSplitOneWindow(QDialog):
         if n == 3:
             label.setText('Parameter: 소리 없는 구간의 최소 길이.\n(default: 800, 단위 ms)')
         elif n == 4:
-            label.setText('Parameter: 침묵 구간의 기준.\n높을 수록 관용적이고 낮을수록 깐깐합니다.\n(default: -45, 단위 dB)')
+            label.setText('Parameter: 침묵 구간의 기준.\n높을 수록 관용적이고 낮을수록 깐깐합니다.\n(default: -50, 단위 dB)')
         
         dialog.show()
     # 오디오 쪼개기
