@@ -341,10 +341,12 @@ class CWidget(QWidget):
             lines = open(self.textFile[0], 'r', encoding='UTF-8').readlines()
         except UnicodeDecodeError:
             lines = open(self.textFile[0], 'r', encoding='cp949').readlines()
+        if 'filelist' in self.textFile[0]:
+            lines = [line.split('|')[-1] for line in lines]
 
         for i, line in enumerate(lines):
             line = line.rstrip('\n')
-            self.table.setItem(i,0, QTableWidgetItem(line))
+            self.table.setItem(i, 0, QTableWidgetItem(line))
 
         if not refresh:
             self.textEditors[0].textEdit.setText(''.join(lines))
@@ -367,10 +369,16 @@ class CWidget(QWidget):
     def update_text(self):
         if hasattr(self, 'textFile') and self.textFile[0] != '':
             texts = self.textEditors[0].textEdit.toPlainText()
-            open(self.textFile[0], 'w' , encoding='utf-8').write(texts)
+            if 'filelist' in self.textFile[0]:
+                utils.make_filelist(self.audioDir, texts.split('\n'), self.textFile[0])
+            else:
+                open(self.textFile[0], 'w', encoding='utf-8').write(texts)
         if hasattr(self, 'textFile2') and self.textFile2[0] != '':
             texts = self.textEditors[1].textEdit.toPlainText()
-            open(self.textFile2[0], 'w' , encoding='utf-8').write(texts)
+            if 'filelist' in self.textFile2[0]:
+                utils.make_filelist(self.audioDir, texts.split('\n'), self.textFile2[0])
+            else:
+                open(self.textFile2[0], 'w', encoding='utf-8').write(texts)
 
     # UI 갱신 함수
     def refresh(self):
@@ -463,36 +471,19 @@ class CWidget(QWidget):
     def make_filelist(self):
         _g2p, _jamo, _validation = [ckbx.isChecked() for ckbx in self.filelist_ckboxes]
 
-        dst = os.path.join(os.path.dirname(self.audioDir), self.filelist_name.text())
-        dst_train = os.path.join(os.path.dirname(self.audioDir), 'train_' + self.filelist_name.text())
-        dst_valid = os.path.join(os.path.dirname(self.audioDir), 'valid_' + self.filelist_name.text())
+        if _validation:
+            dst_train = os.path.join(os.path.dirname(self.audioDir), 'train_' + self.filelist_name.text())
+            dst_valid = os.path.join(os.path.dirname(self.audioDir), 'valid_' + self.filelist_name.text())
+            dst = (dst_train, dst_valid)
+        else:
+            dst = os.path.join(os.path.dirname(self.audioDir), self.filelist_name.text())
         
-        wavs = sorted(glob.glob(os.path.join(self.audioDir, '*.wav')))
         lines = open(self.textFile[0], 'r', encoding='UTF-8').read()
         if _g2p: lines = G2p()(lines, descriptive=True, to_syl=True, use_dict=True)
         if _jamo: lines = h2j(lines)
         lines = lines.split('\n')
 
-        random.seed(1997)
-        idxs = range(min(len(wavs), len(lines)))
-        valid_idxs = random.sample(idxs, min(10, len(idxs)//10))
-        if _validation:
-            t = open(dst_train, 'w', encoding='UTF8')
-            v = open(dst_valid, 'w', encoding='UTF8')
-        else:
-            t = open(dst, 'w', encoding='utf-8')
-
-        for i in idxs:
-            filename = os.path.basename(wavs[i])
-            new_line = f'{filename}|{lines[i]}\n'
-
-            if _validation and i in valid_idxs:
-                v.write(new_line)
-            else:
-                t.write(new_line)
-
-        t.close()
-        if 'v' in locals(): v.close()
+        utils.make_filelist(self.audioDir, lines, dst, _validation)
         self.filelist_dialog.close()
 
     # 파일 삭제
