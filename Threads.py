@@ -1,4 +1,5 @@
 import utils
+import librosa
 from scipy.io import wavfile
 from pydub import AudioSegment
 
@@ -6,7 +7,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
 
 
-class SplitAudio(QThread):
+class SplitAudioThread(QThread):
     poped = pyqtSignal(list)
     maxValue = pyqtSignal(int)
     curValue = pyqtSignal(int)
@@ -150,7 +151,7 @@ class SplitAudio(QThread):
 
 
 # Time measurement thread
-class Measurement(QThread):
+class AudioMeasurementThread(QThread):
     poped = pyqtSignal(int)
     def __init__(self, wavs, q):
         super().__init__()
@@ -169,3 +170,20 @@ class Measurement(QThread):
             self.total_time += t
             self.poped.emit(i+1)
 
+class AudioTransformThread(QThread):
+    '''오디오 파일을 44.1khz 모노타입으로 변환하는 쓰레드'''
+    poped = pyqtSignal(int)
+    def __init__(self, wavs, q):
+        super().__init__()
+        self.wavs = wavs
+        self.q = q
+        
+    def run(self):
+        while not self.q.empty():
+            self.q.get()
+        for i, wav in enumerate(self.wavs):
+            if not self.q.empty():
+                break
+            y, sr = librosa.load(wav, sr=44100, mono=True)
+            wavfile.write(wav, sr, y)
+            self.poped.emit(i+1)

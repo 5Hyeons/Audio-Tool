@@ -1,7 +1,10 @@
 from PyQt5.QtWidgets import *
 
 class TextEditor(QWidget):
-    
+    '''
+    검수 대본 편집을 위한 텍스트 편집기.
+    현재 1, 2로 나뉘며 1은 일반 대본, 2는 g2p로 변환한 대본입니다.
+    '''
     def __init__(self):
         super().__init__()
         self.initUI()

@@ -416,15 +416,19 @@ class CWidget(QWidget):
         self.AudioConcatWindow.exec()
 
     def audio_transform(self):
-        pass
-    
+        if not hasattr(self, 'audioDir') or self.audioDir == '':
+            return
+        wavs = sorted(glob.glob(os.path.join(self.audioDir, '*.wav')))
+        new_window = AudioTransformWindow(self, wavs)
+        new_window.exec()
+
     # 시간 측정
     def time_measurement(self):
         if not hasattr(self, 'audioDir') or self.audioDir == '':
             return
-        wavs = glob.glob(os.path.join(self.audioDir, '*.wav'))
-        third = TimeMeasurementWindow(self, wavs)
-        third.exec()
+        wavs = sorted(glob.glob(os.path.join(self.audioDir, '*.wav')))
+        new_window = TimeMeasurementWindow(self, wavs)
+        new_window.exec()
 
     # 파일 정렬
     def file_sort_dialog(self):

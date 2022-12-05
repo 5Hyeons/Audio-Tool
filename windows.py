@@ -9,7 +9,7 @@ from multiprocessing import Queue
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import pyqtSlot
 
-from Threads import Measurement, SplitAudio
+from Threads import *
 from player import *
 
 
@@ -83,7 +83,7 @@ class AudioSplitWindow(QDialog):
         self.setLayout(vbox)
 
     def initThread(self):
-        self.consumer = SplitAudio()
+        self.consumer = SplitAudioThread()
         self.consumer.poped.connect(self.generate_audio)
         self.consumer.maxValue.connect(self.set_pbar)
         self.consumer.curValue.connect(self.update_pbar)
@@ -477,14 +477,11 @@ class AudioConcatWindow(QDialog):
     def tableDbClicked(self, e):
         self.player.play(startRow=self.selectedList[0])
 
-# Time measurement dialog
-class TimeMeasurementWindow(QProgressDialog):
-    '''불러온 오디오 파일들의 전체 길이를 측정하는 클래스입니다.'''
-    def __init__(self, w, wavs):
+
+class ProgressDialog(QProgressDialog):
+    '''ProgressDialog super class'''
+    def __init__(self, w):
         super().__init__(w)
-        self.setWindowTitle(" ")
-        self.setLabelText("Measuring time ...")
-        self.setRange(0, len(wavs))
         self.setAutoClose(False)
         self.setAutoReset(False)
         btn = QPushButton("Cancle")
@@ -492,9 +489,31 @@ class TimeMeasurementWindow(QProgressDialog):
         self.setCancelButton(btn)
         
         self.q = Queue()
-        self.consumer = Measurement(wavs, self.q)
+
+    def setThread(self, consumer):
+        self.consumer = consumer
         self.consumer.poped.connect(self.update)
         self.consumer.start()
+
+    @pyqtSlot(int)
+    def update(self, data):
+        self.setValue(data)
+        if data == self.maximum():
+            self.setCancelButtonText('done')
+
+    def canceled(self):
+        self.q.put(0)
+        self.close()
+
+# Time measurement dialog
+class TimeMeasurementWindow(ProgressDialog):
+    '''불러온 오디오 파일들의 전체 길이를 측정하는 클래스.'''
+    def __init__(self, w, wavs):
+        super().__init__(w)
+        self.setWindowTitle(" ")
+        self.setLabelText("Measuring time ...")
+        self.setRange(0, len(wavs))
+        self.setThread(AudioMeasurementThread(wavs, self.q))
         
     @pyqtSlot(int)
     def update(self, data):
@@ -503,6 +522,12 @@ class TimeMeasurementWindow(QProgressDialog):
             self.setLabelText(f"total time is {self.consumer.total_time//60} m")
             self.setCancelButtonText('done')
     
-    def canceled(self):
-        self.q.put(0)
-        self.close()
+class AudioTransformWindow(ProgressDialog):
+    '''오디오를 44k mono type으로 변환하는 윈도우.'''
+    def __init__(self, w, wavs):
+        super().__init__(w)
+        self.setWindowTitle(" ")
+        self.setLabelText("Audio is transforming ...")
+        self.setRange(0, len(wavs))
+        self.setThread(AudioTransformThread(wavs, self.q))
+
