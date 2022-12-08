@@ -1,3 +1,4 @@
+import os
 import utils
 import librosa
 from scipy.io import wavfile
@@ -185,5 +186,6 @@ class AudioTransformThread(QThread):
             if not self.q.empty():
                 break
             y, sr = librosa.load(wav, sr=44100, mono=True)
+            os.remove(wav)
             wavfile.write(wav, sr, y)
             self.poped.emit(i+1)
