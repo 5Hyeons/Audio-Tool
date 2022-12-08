@@ -33,3 +33,8 @@ class TextEditor(QWidget):
         else:
             self.textEdit.zoomOut(1)
 
+def makeHboxLayout(*widgets):
+    hbox = QHBoxLayout()
+    for widget in widgets:
+        hbox.addWidget(widget)
+    return hbox

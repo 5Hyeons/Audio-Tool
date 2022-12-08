@@ -29,9 +29,10 @@ class CWidget(QWidget):
         self.lastSelectedLine = 0
         self.playOption = QMediaPlaylist.Sequential
  
-        self.setWindowTitle('오디오 검수 툴')
+        self.setWindowTitle('TTS Data Tool')
         self.setWindowIcon(QIcon('AIPARK_logo.png'))
         self.initUI()
+
  
     def initUI(self):
         self.initDialog()
@@ -43,7 +44,9 @@ class CWidget(QWidget):
          
         box = QVBoxLayout()
         hbox = QHBoxLayout()
-        self.table = QTableWidget(0, 1, self)   
+        self.table = QTableWidget(0, 1, self) 
+        # override 
+        self.table.keyPressEvent = self.keyPressTable
         header = self.table.horizontalHeader()          
         header.setSectionResizeMode(0, QHeaderView.Stretch)
         self.table.setHorizontalHeaderItem(0, QTableWidgetItem('Title'))
@@ -197,6 +200,10 @@ class CWidget(QWidget):
         gb.setLayout(hbox)
         vbox.addWidget(gb)
 
+        statusbar = QStatusBar()
+        statusbar.showMessage('made by hans')
+        vbox.addWidget(statusbar)
+
         self.setLayout(vbox)
         self.show()
  
@@ -255,17 +262,33 @@ class CWidget(QWidget):
             hbox.addWidget(ckbox)
         vbox.addLayout(hbox)
         
-        hbox = QHBoxLayout()
-        label = QLabel('name :')
+        label = QLabel('character :')
+        self.character = QLineEdit()
+        self.character.setMaximumWidth(130)
+        vbox.addLayout(makeHboxLayout(label, self.character))
+
+        label = QLabel('filename  :')
         self.filelist_name = QLineEdit('filelist.txt')
-        hbox.addWidget(label)
-        hbox.addWidget(self.filelist_name)
-        vbox.addLayout(hbox)
+        self.filelist_name.setMaximumWidth(130)
+        vbox.addLayout(makeHboxLayout(label, self.filelist_name))
 
         btn = QPushButton('OK')
         btn.clicked.connect(self.make_filelist)
         vbox.addWidget(btn)
         self.filelist_dialog.setLayout(vbox)
+
+    def keyPressTable(self, event):
+        print(event.key())
+        if event.key() == Qt.Key.Key_Up:
+            QTableWidget.keyPressEvent(self.table, event)
+        elif event.key() == Qt.Key.Key_Down:
+            QTableWidget.keyPressEvent(self.table, event)
+        elif event.key() in range(48, 58, 1):
+            character = event.key()-48
+            print('press ', character)
+            self.insertCharacter(self.textEditors, self.selectedList[0], character)
+        else:
+            super().keyPressEvent(event)
 
     def keyPressEvent(self, event):
         if self.table.rowCount() != 0:
@@ -279,6 +302,14 @@ class CWidget(QWidget):
             # 왼쪽 방향키 입력 시 재생
             elif event.key() == Qt.Key_Left:
                 self.player.play(startRow=self.selectedList[0])
+            # open the text editor1
+            elif event.key() == Qt.Key_Right:
+                if self.btnShowEditor1.isChecked():
+                    self.textEditors[0].hide()  
+                    self.btnShowEditor1.setChecked(False)
+                else:
+                    self.btnShowEditor1.setChecked(True)
+                    self.textEditors[0].show() 
             # F5키 입력 시 새로고침
             elif event.key() in [Qt.Key_R, Qt.Key_F5]:
                 self.refresh()
@@ -461,10 +492,21 @@ class CWidget(QWidget):
         new_textFile = os.path.join(dir, name + '_cleand' + ext)
         g2p = G2p()
         with open(new_textFile, 'w', encoding='utf-8') as f:
-            lines = open(textFile, 'r', encoding='utf-8').read()
-            lines_g2p = g2p(lines, descriptive=True, to_syl=True, use_dict=True)
-            lines_g2p = lines_g2p.replace('*', '')
-            f.write(lines_g2p)
+            # filelist가 input으로 들어왔을 때도 고려하기 때문에 다소 복잡하다.
+            # It is somewhat complicated since filelist is also considered when it comes to into input
+            lines = open(textFile, 'r', encoding='utf-8').readlines()
+            files, texts = [], []
+            for line in lines:
+                splited = line.split('|')
+                if len(splited) != 1:
+                    files.append('|'.join(splited[:-1])+'|')
+                else:
+                    files.append('')
+                texts.append(splited[-1])
+            texts = ''.join(texts)
+            lines_g2p = g2p(texts, descriptive=True, to_syl=True, use_dict=True).split('\n')
+            new_lines = [file + line_g2p+'\n' for file, line_g2p in zip(files, lines_g2p)]
+            f.write(''.join(new_lines))
 
     def make_filelist_dialog(self):
         if not hasattr(self, 'audioDir') or self.audioDir == '' or not hasattr(self, 'textFile') or self.textFile[0] == '':
@@ -482,12 +524,13 @@ class CWidget(QWidget):
         else:
             dst = os.path.join(os.path.dirname(self.audioDir), self.filelist_name.text())
         
-        lines = open(self.textFile[0], 'r', encoding='UTF-8').read()
+        lines = open(self.textFile[0], 'r', encoding='UTF-8').readlines()
+        lines = ''.join([line.split('|')[-1] for line in lines])
         if _g2p: lines = G2p()(lines, descriptive=True, to_syl=True, use_dict=True)
         if _jamo: lines = h2j(lines)
         lines = lines.split('\n')
 
-        utils.make_filelist(self.audioDir, lines, dst, _validation)
+        utils.make_filelist(self.audioDir, self.character.text(), lines, dst, _validation)
         self.filelist_dialog.close()
 
     # 파일 삭제
@@ -539,7 +582,6 @@ class CWidget(QWidget):
         # self.refresh()
         new_index = bisect.bisect_left(self.playlist, originalPath)
         print(originalPath, new_index)
-        print('playlist', self.playlist)
         self.addAudioList(refresh=True)
         self.updateMediaChanged(new_index)
         self.selectedList = [new_index]
@@ -591,10 +633,30 @@ class CWidget(QWidget):
             textEdit.setTextCursor(cursor)
             textEdit.moveCursor(QTextCursor.MoveOperation.EndOfLine, QTextCursor.MoveMode.KeepAnchor)
             textEdit.setTextBackgroundColor(QColor(color))
-            textEdit.moveCursor(QTextCursor.MoveOperation.Down, QTextCursor.MoveMode.MoveAnchor)
             textEdit.moveCursor(QTextCursor.MoveOperation.StartOfLine, QTextCursor.MoveMode.MoveAnchor)
- 
+            textEdit.moveCursor(QTextCursor.MoveOperation.Down, QTextCursor.MoveMode.MoveAnchor)
 
+    def insertCharacter(self, textEditors, index, character):
+        if not (self.btnShowEditor1.isChecked() or self.btnShowEditor2.isChecked()):
+            return
+        for textEditor in textEditors:
+            textEdit = textEditor.textEdit
+            textBlock = textEdit.document().findBlockByLineNumber(index)
+            text = textBlock.text()
+            if text == '': continue
+            if text[-1].isdigit():
+                text = text[:-1] + str(character)
+            else:
+                text = text + str(character)
+            cursor = QTextCursor(textBlock)
+            cursor.select(QTextCursor.SelectionType.BlockUnderCursor)
+            cursor.removeSelectedText()
+            textEdit.setTextCursor(cursor)
+            if index != 0:
+                textEdit.insertPlainText('\n'+text)
+            else:
+                textEdit.insertPlainText(text)
+            textEdit.moveCursor(QTextCursor.MoveOperation.Down, QTextCursor.MoveMode.MoveAnchor)
  
 if __name__ == '__main__':
     app = QApplication(sys.argv)
