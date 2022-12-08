@@ -504,7 +504,7 @@ class CWidget(QWidget):
                     files.append('')
                 texts.append(splited[-1])
             texts = ''.join(texts)
-            lines_g2p = g2p(texts, descriptive=True, to_syl=True, use_dict=True)
+            lines_g2p = g2p(texts, descriptive=True, to_syl=True, use_dict=True).split('\n')
             new_lines = [file + line_g2p+'\n' for file, line_g2p in zip(files, lines_g2p)]
             f.write(''.join(new_lines))
 
