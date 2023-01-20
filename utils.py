@@ -2,6 +2,8 @@ import os
 import glob
 import random
 import itertools
+from pydub import AudioSegment
+from pydub.silence import split_on_silence
 
 def pairwise(iterable):
     "s -> (s0,s1), (s1,s2), (s2, s3), ..."
