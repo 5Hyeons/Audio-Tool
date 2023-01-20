@@ -8,6 +8,7 @@ from widgets import *
 
 import sys
 import os
+import time
 import shutil
 import random
 import bisect
@@ -468,11 +469,18 @@ class CWidget(QWidget):
         self.sort_dialog.show()
 
     def file_sort(self):
-        wavs = sorted(glob.glob(os.path.join(self.audioDir, '*.wav')))
+        # preprocess for nesting
         if os.path.exists(self.deleteDir):
             shutil.rmtree(self.deleteDir)
+        wavs = sorted(glob.glob(os.path.join(self.audioDir, '*.wav')))
+        for i, path in enumerate(wavs):
+            # temp라는 이름으로 임시 변경
+            os.rename(path, f'{self.audioDir}/temp_{i:04}.wav')
+        time.sleep(0.1)
+        wavs = sorted(glob.glob(os.path.join(self.audioDir, '*.wav')))
         name = self.sort_line.text()
         offset = int(self.sort_offset.text()) if self.sort_offset.text().isdigit() else 1
+
         for i, path in enumerate(wavs):
             os.rename(path, f'{self.audioDir}/{name}_{i+offset:04}.wav')
         self.sort_dialog.close()
