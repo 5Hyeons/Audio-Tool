@@ -448,7 +448,13 @@ class AudioConcatWindow(QDialog):
 
     # split 한 파일 원본과 교체
     def replace(self):
-        selectedFile = self.playlist[self.selectedList[0]]
+        try:
+            selectedFile = self.playlist[self.selectedList[0]]
+        except IndexError:
+            self.player.stop()
+            self.close()
+            return
+        
         for originalFile in self.files:
             print(f'remove {originalFile}')
             os.remove(originalFile)
@@ -484,7 +490,7 @@ class ProgressDialog(QProgressDialog):
         super().__init__(w)
         self.setAutoClose(False)
         self.setAutoReset(False)
-        btn = QPushButton("Cancle")
+        btn = QPushButton("Cancel")
         btn.clicked.connect(self.canceled)
         self.setCancelButton(btn)
         
