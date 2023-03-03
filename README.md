@@ -5,7 +5,7 @@
 ### Preparations
 - **Clone this repo and install requirements**
     ```bash
-    git clone https://github.com/5Hyeons/Audio-Tool.git
+    git clone https://github.com/AIPARK-TTS/Data_Tool.git
     cd Audio_Tool
     pip install -r requirements.txt
     ```
