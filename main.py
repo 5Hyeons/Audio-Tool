@@ -637,8 +637,8 @@ class CWidget(QWidget):
         self.player.updatePlayMode(id)
  
     def paintEvent(self, e):
-        self.table.setColumnWidth(0, self.table.width()*0.7)
-        self.table.setColumnWidth(1, self.table.width()*0.2)
+        self.table.setColumnWidth(0, int(self.table.width()*0.7))
+        self.table.setColumnWidth(1, int(self.table.width()*0.2))
  
     def createPlaylist(self, files):
         self.playlist.clear()
