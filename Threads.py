@@ -46,6 +46,7 @@ class SplitAudioThread(QThread):
         ]
 
         del sound_file
+        # progress bar 갱신을 위한 emit
         self.poped.emit(audio_chunks)
 
     def detect_silence(self, audio_segment, min_silence_len=1000, silence_thresh=-16, seek_step=1):
@@ -169,6 +170,7 @@ class AudioMeasurementThread(QThread):
             sr, y = wavfile.read(wav)
             t = len(y)/sr
             self.total_time += t
+            # progress bar 갱신을 위한 emit
             self.poped.emit(i+1)
 
 class AudioTransformThread(QThread):
@@ -188,4 +190,5 @@ class AudioTransformThread(QThread):
             y, sr = librosa.load(wav, sr=44100, mono=True)
             os.remove(wav)
             wavfile.write(wav, sr, y)
+            # progress bar 갱신을 위한 emit
             self.poped.emit(i+1)

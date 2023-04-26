@@ -1,6 +1,6 @@
 from PyQt5.QtMultimedia import QMediaPlaylist, QMediaContent, QMediaPlayer
 from PyQt5.QtCore import Qt, QUrl
- 
+
 class CPlayer:
  
     def __init__(self, parent):
@@ -10,9 +10,9 @@ class CPlayer:
         self.player = QMediaPlayer()
         self.player.setPlaybackRate(1.0)
         self.player.currentMediaChanged.connect(self.mediaChanged)
-         
+        
         self.playlist = QMediaPlaylist()
- 
+
     def state(self):
         return self.player.state()
 
@@ -20,10 +20,10 @@ class CPlayer:
         self.stop()
         self.playlist.setCurrentIndex(startRow)
         self.player.play()
-         
+        
     def pause(self):
         self.player.pause()         
- 
+
     def stop(self):
         self.player.stop()
  
@@ -39,10 +39,10 @@ class CPlayer:
         for path in playlists:
             url = QUrl.fromLocalFile(path)
             self.playlist.addMedia(QMediaContent(url))
- 
+
         self.playlist.setPlaybackMode(option)
         self.player.setPlaylist(self.playlist)
- 
+
     def updatePlayMode(self, option):
         self.playlist.setPlaybackMode(option)
  

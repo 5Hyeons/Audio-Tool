@@ -46,7 +46,7 @@ class CWidget(QWidget):
         box = QVBoxLayout()
         hbox = QHBoxLayout()
         self.table = QTableWidget(0, 1, self) 
-        # override 
+        # override key event
         self.table.keyPressEvent = self.keyPressTable
         header = self.table.horizontalHeader()          
         header.setSectionResizeMode(0, QHeaderView.Stretch)
@@ -56,10 +56,12 @@ class CWidget(QWidget):
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         # multi row selection
         # self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
-        # signal 
+        # 선택 바뀌면 self.selectedList 갱신
         self.table.itemSelectionChanged.connect(self.tableChanged)
+        # 더블 클릭 시 재생
         self.table.itemDoubleClicked.connect(self.tableDbClicked)
         hbox.addWidget(self.table)
+        # show editor1, 2와 연결
         self.textEditors = [TextEditor(), TextEditor()]
         self.textEditors[0].hide()
         self.textEditors[1].hide()
@@ -71,10 +73,12 @@ class CWidget(QWidget):
         gb_sub = QGroupBox()
         vvbox = QVBoxLayout()
 
+        # 오디오 리스트 추가 (폴더 선택)
         btnAddAudio = QPushButton('Add Audio')
         btnAddAudio.clicked.connect(self.addAudioList)
         vvbox.addWidget(btnAddAudio)
         
+        # split and concat func
         hhbox = QHBoxLayout()
         btnSplit = QPushButton('Split')
         btnConcat = QPushButton('Concat')
@@ -173,7 +177,6 @@ class CWidget(QWidget):
         btnDecom.clicked.connect(self.make_filelist_dialog)
 
         # Function UI
-
         hbox = QHBoxLayout()
         gb_sub = QGroupBox()
         box = QVBoxLayout()
@@ -280,13 +283,16 @@ class CWidget(QWidget):
 
     def keyPressTable(self, event):
         print(event.key())
+        # 위로 가기, 아래로 가기
         if event.key() == Qt.Key.Key_Up:
             QTableWidget.keyPressEvent(self.table, event)
         elif event.key() == Qt.Key.Key_Down:
             QTableWidget.keyPressEvent(self.table, event)
+        # 0~9 숫자 키 입력 시
         elif event.key() in range(48, 58, 1):
             character = event.key()-48
             print('press ', character)
+            # text editor에 마킹
             self.insertCharacter(self.textEditors, self.selectedList[0], character)
         else:
             super().keyPressEvent(event)
@@ -361,21 +367,27 @@ class CWidget(QWidget):
         self.updateMediaChanged(last_selection)    
  
     def addTextList(self, refresh=False):
+        '''
+        refresh가 True인 경우는 textEditor[0]에서 수정하고 업데이트 키(F5)를 누르거나 버튼을 누르는 경우가 있습니다.
+        이 때는 원래 가지고 있던 textFile 경로를 재사용합니다.
+        '''
         if not refresh: 
             self.textFile = QFileDialog.getOpenFileName(self,
                                             'Select text file',
                                             '',
                                             'Text (*.txt*)',
                                             )   
+        # self.textFile 변수 자체가 없거나 있어도 내용이 없는 경우
         if not hasattr(self, 'textFile') or self.textFile[0] == '':
             return
         try:
             lines = open(self.textFile[0], 'r', encoding='UTF-8').readlines()
         except UnicodeDecodeError:
             lines = open(self.textFile[0], 'r', encoding='cp949').readlines()
+        # 파일리스트 예외 처리
         if 'filelist' in self.textFile[0]:
             lines = [line.split('|')[-1] for line in lines]
-
+        # 메인 테이블 갱신
         for i, line in enumerate(lines):
             line = line.rstrip('\n')
             self.table.setItem(i, 0, QTableWidgetItem(line))
@@ -384,6 +396,9 @@ class CWidget(QWidget):
             self.textEditors[0].textEdit.setText(''.join(lines))
 
     def addAdditionalText(self, checked):
+        '''
+        cleaned 텍스트 파일을 담는 editor2를 추가하는 부분입니다.
+        '''
         if not checked: return
         self.textFile2 = QFileDialog.getOpenFileName(self,
                                     'Select additional text',
@@ -398,6 +413,7 @@ class CWidget(QWidget):
             lines = open(self.textFile2[0], 'r', encoding='cp949').read()
         self.textEditors[1].textEdit.setText(lines)
 
+    # 텍스트 파일을 갱신하는 함수
     def update_text(self):
         if hasattr(self, 'textFile') and self.textFile[0] != '':
             texts = self.textEditors[0].textEdit.toPlainText()
@@ -414,7 +430,9 @@ class CWidget(QWidget):
 
     # UI 갱신 함수
     def refresh(self):
+        # 텍스트 파일 저장
         self.update_text()
+        # 테이블 갱신
         self.addAudioList(refresh=True)
         self.addTextList(refresh=True)
 
@@ -436,6 +454,7 @@ class CWidget(QWidget):
         self.AudioSplitOneWindow.exec()
         # update audio list
         self.addAudioList(refresh=True)
+
     # 오디오 붙이는 함수
     def audio_concat(self):
         if not hasattr(self, 'audioDir') or len(self.selectedList) == 1:
@@ -630,20 +649,28 @@ class CWidget(QWidget):
     def updateMediaChanged(self, index):
         if index>=0:
             self.table.selectRow(index)
+            # 배경 색을 흰색으로 하는 것은 기존의 노란색으로 하이라이트 되어 있던 것을 돌리는 행위입니다.
             self.updateTextEditor(self.textEditors, self.lastSelectedLine, 'White')
+            # 배경을 노란색으로 하이라이트 처리
             self.updateTextEditor(self.textEditors, index, color='Yellow')
             self.lastSelectedLine = index
 
     def updateTextEditor(self, textEditors, index, color:str='Yellow') -> None:
+        '''
+        Editor의 커서를 현재 index 위치로 옮기고 배경색을 변경합니다.
+        '''
         for textEditor in textEditors:
             textEdit = textEditor.textEdit
             cursor = QTextCursor(textEdit.document().findBlockByLineNumber(index))
             textEdit.setTextCursor(cursor)
             textEdit.moveCursor(QTextCursor.MoveOperation.EndOfLine, QTextCursor.MoveMode.KeepAnchor)
+            # 배경 색 변경
             textEdit.setTextBackgroundColor(QColor(color))
             textEdit.moveCursor(QTextCursor.MoveOperation.StartOfLine, QTextCursor.MoveMode.MoveAnchor)
+            # 다음 인덱스로 넘어가기
             textEdit.moveCursor(QTextCursor.MoveOperation.Down, QTextCursor.MoveMode.MoveAnchor)
 
+    # text editor에 숫자 마킹하는 함수
     def insertCharacter(self, textEditors, index, character):
         if not (self.btnShowEditor1.isChecked() or self.btnShowEditor2.isChecked()):
             return
@@ -665,7 +692,7 @@ class CWidget(QWidget):
             else:
                 textEdit.insertPlainText(text)
             textEdit.moveCursor(QTextCursor.MoveOperation.Down, QTextCursor.MoveMode.MoveAnchor)
- 
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     w = CWidget()

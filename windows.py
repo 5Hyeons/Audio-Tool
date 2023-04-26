@@ -126,6 +126,7 @@ class AudioSplitWindow(QDialog):
     
     @pyqtSlot(list)
     def generate_audio(self, audio_chunks):
+        '''SplitAudioThread에서 나온 chunks를 저장'''
         dst = os.path.join(os.path.dirname(self.src), self.name)
         os.makedirs(dst, exist_ok=True)
 
@@ -188,7 +189,7 @@ class AudioSplitWindow(QDialog):
 
 class AudioSplitOneWindow(QDialog):
     '''
-    문제 있는 오디오 하나를 여러개로 쪼개서 괜찮은 부분만 취하는 클래스입니다.
+    문제 있는 오디오 **하나**를 여러개로 쪼개서 괜찮은 부분만 취하는 Dialog 입니다.
     '''
     def __init__(self, w):
         super().__init__(w)
@@ -273,11 +274,12 @@ class AudioSplitOneWindow(QDialog):
             label.setText('Parameter: 침묵 구간의 기준.\n높을 수록 관용적이고 낮을수록 깐깐합니다.\n(default: -50, 단위 dB)')
         
         dialog.show()
+
     # 오디오 쪼개기
     def split(self):
         tmp_dir = os.path.join(os.getcwd(), 'temp')
         os.makedirs(tmp_dir, exist_ok=True)
-        # 파일 전부 삭제
+        # 기존 임시 파일 전부 삭제
         [os.remove(path) for path in glob.glob(os.path.join(tmp_dir, '*'))]
         seg = utils.AudioSegment.from_wav(self.file)
         min_silence_len = int(self.line1.text())
@@ -292,6 +294,7 @@ class AudioSplitOneWindow(QDialog):
 
         self.createTable(out_files)
         self.createPlaylist(out_files)
+
     # split 한 파일 원본과 교체
     def replace(self):
         self.player.stop()
@@ -402,7 +405,7 @@ class AudioConcatWindow(QDialog):
 
         self.tmp_dir = os.path.join(os.getcwd(), 'temp')
         os.makedirs(self.tmp_dir, exist_ok=True)
-        # 파일 전부 삭제
+        # 기존 임시 파일 전부 삭제
         [os.remove(path) for path in glob.glob(os.path.join(self.tmp_dir, '*'))]
 
     def show_guide(self):

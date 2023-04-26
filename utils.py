@@ -22,9 +22,11 @@ def db_to_float(db, using_amplitude=True):
     else:  # using power
         return 10 ** (db / 10)
 
+# 파일리스트 생성하는 함수
 def make_filelist(audioDir, defaultChar, lines, dst, validation=False):
     wavs = sorted(glob.glob(os.path.join(audioDir, '*.wav')))
-    lines = list(lines) # copy lines
+    # copy lines, 카피 안하면 원본이 변형됨
+    lines = list(lines) 
     random.seed(1997)
     idxs = range(min(len(wavs), len(lines)))
     valid_idxs = random.sample(idxs, min(10, len(idxs)//10))
