@@ -301,7 +301,7 @@ class CWidget(QWidget):
         if self.table.rowCount() != 0:
             print(event.key())
             # delete 키 입력 시 제거
-            if event.key() == Qt.Key_Delete:
+            if event.key() in [Qt.Key_Delete, Qt.Key_D]:
                 self.delete()
             # backspace 키 입력 시 복원
             elif event.key() == Qt.Key_Backspace:
@@ -354,7 +354,7 @@ class CWidget(QWidget):
         if not hasattr(self, 'audioDir') or self.audioDir == '':
             return
         
-        files = [os.path.join(self.audioDir, file) for file in sorted(os.listdir(self.audioDir)) if '.wav' in file]    
+        files = [os.path.join(self.audioDir, file) for file in sorted(os.listdir(self.audioDir)) if file.endswith(('.wav', '.mp3'))]    
 
         last_selection = self.selectedList[0]
         cnt = len(files)       

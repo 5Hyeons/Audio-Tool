@@ -281,7 +281,12 @@ class AudioSplitOneWindow(QDialog):
         os.makedirs(tmp_dir, exist_ok=True)
         # 기존 임시 파일 전부 삭제
         [os.remove(path) for path in glob.glob(os.path.join(tmp_dir, '*'))]
-        seg = utils.AudioSegment.from_wav(self.file)
+        if self.file.endswith('.mp3'):
+            seg = utils.AudioSegment.from_mp3(self.file)
+        elif self.file.endswith('.wav'):
+            seg = utils.AudioSegment.from_wav(self.file)
+        else:
+            raise ValueError('Not supported file type')
         min_silence_len = int(self.line1.text())
         silence_thresh = int(self.line2.text())
         audio_chunks = utils.split_on_silence(seg, min_silence_len, silence_thresh)
@@ -528,7 +533,7 @@ class TimeMeasurementWindow(ProgressDialog):
     def update(self, data):
         self.setValue(data)
         if data == self.maximum():
-            self.setLabelText(f"total time is {self.consumer.total_time//60} m")
+            self.setLabelText(f"total time is {round(self.consumer.total_time/60, 3)} m")
             self.setCancelButtonText('done')
     
 class AudioTransformWindow(ProgressDialog):
