@@ -2,7 +2,6 @@ dist/
 build/
 jamo/
 librosa/
-g2pK/
 samples/
 
 *.pyc
