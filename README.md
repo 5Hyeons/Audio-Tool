@@ -9,6 +9,7 @@
     cd Audio_Tool
     pip install -r requirements.txt
     ```
+- **You should install ffmpeg on your system**
 
 ### Usage
 - **Run main.py**
